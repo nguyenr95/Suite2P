@@ -12,9 +12,18 @@ ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date);
 % build file list
 ops.fsroot = [];
 for j = 1:length(ops.SubDirs)
-    ops.fsroot{j} = dir(fullfile(ops.RootDir, ops.SubDirs{j}, '*.tif'));
+    % ops.fsroot{j} = dir(fullfile(ops.RootDir, ops.SubDirs{j}, '*.tif'));
+    % ops.fsroot{j} = dir(fullfile(ops.RootDir, 'Corrected', '*001.tif'));
+    ops.fsroot{j} = dir(fullfile(ops.RootDir, '*001.tif'));
     for k = 1:length(ops.fsroot{j})
-        ops.fsroot{j}(k).name = fullfile(ops.RootDir, ops.SubDirs{j}, ops.fsroot{j}(k).name);
+        % Do not include overview image
+        if isempty(strfind(ops.fsroot{j}(k).name,'overview'));
+            ops.fsroot{j}(k).name = fullfile(ops.RootDir, ops.fsroot{j}(k).name);
+            % ops.fsroot{j}(k).name = fullfile(ops.RootDir, ops.SubDirs{j}, ops.fsroot{j}(k).name);
+            % ops.fsroot{j}(k).name = fullfile(ops.RootDir, 'Corrected', ops.fsroot{j}(k).name);
+        else
+            ops.fsroot{j}(k) = [];
+        end
     end
 end
 
@@ -59,5 +68,5 @@ for i = 1:length(ops.SubDirs)
 end
 CharSubDirs = CharSubDirs(1:end-1);
 
-ops.ResultsSavePath = sprintf('%s//%s//%s//%s//', ops.ResultsSavePath, ops.mouse_name, ops.date, ...
-        CharSubDirs);
+ops.ResultsSavePath = sprintf('%s\\%s\\%s\\%s\\', ops.ResultsSavePath, ops.mouse_name, ops.date);
+% ops.ResultsSavePath = sprintf('%s\\%s\\%s\\%s\\', ops.ResultsSavePath, ops.mouse_name, ops.date, CharSubDirs);

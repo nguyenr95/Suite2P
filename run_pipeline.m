@@ -12,10 +12,11 @@ ops0.getROIs                        = getOr(ops0, {'getROIs'}, 1);   % whether t
 ops0.getSVDcomps                    = getOr(ops0, {'getSVDcomps'}, 0);   % whether to save SVD components to disk for later processing
 ops0.nSVD                           = getOr(ops0, {'nSVD'}, 1000);   % how many SVD components to save to disk
 
-ops0.diameter                       = clustrules.diameter;
 
 clustrules = get_clustrules(clustrules);
- 
+
+ops0.diameter                       = clustrules.diameter;
+
 ops = build_ops3(db, ops0);
 
 
