@@ -24,53 +24,69 @@ clustModel     = getOr(ops, {'clustModel'}, 'standard');
 neuropilSub    = getOr(ops, {'neuropilSub'}, 'surround');
 splitBlocks    = getOr(ops, {'splitBlocks'}, 'none');
 %
-if iscell(splitBlocks)
-    ops1         = blockReg2P(ops);  % do registration
-else
-    ops1         = reg2P(ops);  % do registration
+opMode = 'extraction'; % detection OR extraction
+
+if strcmp(opMode,'detection')
+    if iscell(splitBlocks)
+        ops1         = blockReg2P(ops);  % do registration
+    else
+        ops1         = reg2P(ops);  % do registration
+    end
 end
-%
 %%
 for i = 1:length(ops.planesToProcess)
-    iplane  = ops.planesToProcess(i);
-    ops     = ops1{i};
-    %
-    
+    iplane  = ops.planesToProcess(i);    
+    if strcmp(opMode,'detection')
+        ops     = ops1{i};
+    end
     ops.iplane  = iplane;
-    if numel(ops.yrange)<10 || numel(ops.xrange)<10
-        warning('valid range after registration very small, continuing to next plane')
-%         continue;
-    end
     
-    if getOr(ops, {'getSVDcomps'}, 0)
-        ops    = get_svdcomps(ops);
-    end
-    if ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)
-        [ops, U, Sv]    = get_svdForROI(ops);
-    end
-    
-    if ops.getROIs
-        switch clustModel
-            case 'standard'
-                [ops, stat, res]  = fast_clustering(ops,U, Sv);
-            case 'neuropil'                    
-%                 [ops, stat, res]  = fast_clustering_with_neuropil(ops,U, Sv);
-                  % better model of the neuropil
-                  [ops, stat, res]  = fastClustNeuropilCoef(ops,U, Sv);
-        end
-                
-        [stat2, res2] = apply_ROIrules(ops, stat, res, clustrules);
-        
-        switch neuropilSub
-            case 'surround'
-                get_signals_and_neuropil(ops, iplane);
-            case 'none'
-                get_signals(ops, iplane);
-            case 'model'
-                get_signals_NEUmodel(ops, iplane);
+    if all(isfield(ops,{'xrange','yrange'}))
+        if numel(ops.yrange)<10 || numel(ops.xrange)<10
+            warning('valid range after registration very small, continuing to next plane')
+            continue;
         end
     end
-    
+
+    switch opMode
+        case 'detection'
+            if 1
+                if getOr(ops, {'getSVDcomps'}, 0)
+                    ops    = get_svdcomps(ops);
+                end
+                if ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)
+                    [ops, U, Sv]    = get_svdForROI(ops);
+                end
+            end
+
+            if ops.getROIs
+                if 1
+                switch clustModel
+                    case 'standard'
+                        [ops, stat, res]  = fast_clustering(ops,U, Sv);
+                    case 'neuropil'                    
+                          % [ops, stat, res]  = fast_clustering_with_neuropil(ops,U, Sv);
+                          % better model of the neuropil
+                          [ops, stat, res]  = fastClustNeuropilCoef(ops,U, Sv);
+                end
+
+                [stat2, res2] = apply_ROIrules(ops, stat, res, clustrules);
+                end
+                switch neuropilSub
+                    case 'surround'
+                        get_signals_and_neuropil(ops, iplane);
+                    case 'none'
+                        get_signals(ops, iplane);
+                    case 'model'
+                        get_signals_NEUmodel(ops, iplane);
+                end
+            end
+            
+        case 'extraction'
+            
+            % extract_dF(ops, iplane);
+            
+    end
 
     if ops.DeleteBin
         fclose('all');

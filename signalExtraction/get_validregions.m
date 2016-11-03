@@ -16,7 +16,6 @@ for k = 1:length(stat0)
             igood = igood & [stat0(k).region.npix]>clustrules.MinNpix & ...
                 [stat0(k).region.npix]<clustrules.MaxNpix;
 %             igood = [stat0(k).region.npix]>clustrules.MinNpix;
-            
             igood = find(igood);
             for j = 1:length(igood)
                 ix = ix+1;

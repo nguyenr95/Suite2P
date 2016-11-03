@@ -23,8 +23,4 @@ for k = 1:Nk
     stat(k).ipix    = ipix;
     stat(k).lambda  = res.M(ipix);
     
-
-
-%     stat(k).iscell = stat(k).mrs/stat(k).mrs0<1.3 & ...
-%         stat(k).npix>50 & stat(k).npix<300;    
 end
