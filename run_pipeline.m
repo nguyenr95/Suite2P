@@ -24,9 +24,10 @@ clustModel     = getOr(ops, {'clustModel'}, 'standard');
 neuropilSub    = getOr(ops, {'neuropilSub'}, 'surround');
 splitBlocks    = getOr(ops, {'splitBlocks'}, 'none');
 %
-opMode = 'extraction'; % detection OR extraction
+i = 1;
+regops_filename = sprintf('%s/regops_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, i);
 
-if strcmp(opMode,'detection')
+if 1% ~exist(regops_filename,'file')
     if iscell(splitBlocks)
         ops1         = blockReg2P(ops);  % do registration
     else
@@ -35,9 +36,13 @@ if strcmp(opMode,'detection')
 end
 %%
 for i = 1:length(ops.planesToProcess)
-    iplane  = ops.planesToProcess(i);    
-    if strcmp(opMode,'detection')
+    iplane  = ops.planesToProcess(i);
+    if exist('ops1','var')
         ops     = ops1{i};
+    else
+        % if registragion was skipped, load ops file
+        regops_filename = sprintf('%s/regops_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, i);
+        load(regops_filename);
     end
     ops.iplane  = iplane;
     
@@ -48,44 +53,34 @@ for i = 1:length(ops.planesToProcess)
         end
     end
 
-    switch opMode
-        case 'detection'
-            if 1
-                if getOr(ops, {'getSVDcomps'}, 0)
-                    ops    = get_svdcomps(ops);
-                end
-                if ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)
-                    [ops, U, Sv]    = get_svdForROI(ops);
-                end
-            end
+    if getOr(ops, {'getSVDcomps'}, 0)
+        ops    = get_svdcomps(ops);
+    end
+    if ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)
+        [ops, U, Sv]    = get_svdForROI(ops);
+    end
 
-            if ops.getROIs
-                if 1
-                switch clustModel
-                    case 'standard'
-                        [ops, stat, res]  = fast_clustering(ops,U, Sv);
-                    case 'neuropil'                    
-                          % [ops, stat, res]  = fast_clustering_with_neuropil(ops,U, Sv);
-                          % better model of the neuropil
-                          [ops, stat, res]  = fastClustNeuropilCoef(ops,U, Sv);
-                end
+    if ops.getROIs
+        
+        switch clustModel
+            case 'standard'
+                [ops, stat, res]  = fast_clustering(ops,U, Sv);
+            case 'neuropil'                    
+                  % [ops, stat, res]  = fast_clustering_with_neuropil(ops,U, Sv);
+                  % better model of the neuropil
+                  [ops, stat, res]  = fastClustNeuropilCoef(ops,U, Sv);
+        end
 
-                [stat2, res2] = apply_ROIrules(ops, stat, res, clustrules);
-                end
-                switch neuropilSub
-                    case 'surround'
-                        get_signals_and_neuropil(ops, iplane);
-                    case 'none'
-                        get_signals(ops, iplane);
-                    case 'model'
-                        get_signals_NEUmodel(ops, iplane);
-                end
-            end
-            
-        case 'extraction'
-            
-            % extract_dF(ops, iplane);
-            
+        [stat2, res2] = apply_ROIrules(ops, stat, res, clustrules);
+        
+        switch neuropilSub
+            case 'surround'
+                get_signals_and_neuropil(ops, iplane);
+            case 'none'
+                get_signals(ops, iplane);
+            case 'model'
+                get_signals_NEUmodel(ops, iplane);
+        end
     end
 
     if ops.DeleteBin

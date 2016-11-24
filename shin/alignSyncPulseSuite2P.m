@@ -10,6 +10,7 @@ if ~exist('data_file','var')
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
     load(fullfile(PathName,ops_file));
     data_file = dir(fullfile(PathName,'*_proc.mat'));
+    ops.isgood_filename = fullfile(PathName,[data_file.name(1:end-4),'_isgood.mat']);
     % data = matfile(fullfile(PathName,data_file));
 end
 

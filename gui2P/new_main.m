@@ -160,10 +160,14 @@ else
     h.dat.figure.x1all = round(linspace(1/20 * h.dat.cl.Lx, h.dat.cl.Lx, 4));
     h.dat.figure.y1all = round(linspace(1/20 * h.dat.cl.Ly, h.dat.cl.Ly, 4));
     
-    h.dat.F.Fcell = h.dat.Fcell; h.dat.Fcell = [];    
+    if ~isempty(h.dat.FcellNeu) % added by SK 16/11/04
+        h.dat.F.Fcell = h.dat.Fcell; h.dat.Fcell = [];
+    end
     
     if isfield(h.dat, 'FcellNeu')
-        h.dat.F.FcellNeu = h.dat.FcellNeu; h.dat.FcellNeu = [];
+        if ~isempty(h.dat.FcellNeu) % added by SK 16/11/04
+            h.dat.F.FcellNeu = h.dat.FcellNeu; h.dat.FcellNeu = [];
+        end
         if mean(sign(h.dat.F.FcellNeu{1}(:)))<0
             for j = 1:length(h.dat.F.FcellNeu)
                 h.dat.F.FcellNeu{j} = - h.dat.F.FcellNeu{j};
@@ -517,7 +521,15 @@ function pushbutton83_Callback(hObject, eventdata, h)
 function pushbutton84_Callback(hObject, eventdata, h)
 h.dat.F.trace = [];
 dat = h.dat;
-save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
+isgood = dat.cl.iscell;
+
+if isempty(strfind(h.dat.filename,'_proc'))
+    save([h.dat.filename(1:end-4) '_proc_isgood.mat'],'isgood')
+    save([h.dat.filename(1:end-4) '_proc.mat'],'dat','-v7.3')
+else
+    save([h.dat.filename(1:end-4) '_isgood.mat'],'isgood')
+    save(h.dat.filename,'dat','-v7.3')
+end
 
 function pushbutton79_Callback(hObject, eventdata, h)
 function pushbutton80_Callback(hObject, eventdata, h)
@@ -894,7 +906,7 @@ guidata(hObject,h);
 
 % --- Executes on button press in pushbutton90.
 function pushbutton90_Callback(hObject, eventdata, h)
- h.dat.map = 3;
+h.dat.map = 3;
 redraw_meanimg(h);
 guidata(hObject,h);
 
@@ -924,3 +936,19 @@ function pushbutton86_ButtonDownFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+
+
+% --- Executes on button press in pushbutton94.
+function pushbutton94_Callback(hObject, eventdata, h)
+% hObject    handle to pushbutton94 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+isgood = h.dat.cl.iscell;
+
+if isempty(strfind(h.dat.filename,'_proc'))
+    save([h.dat.filename(1:end-4) '_proc_isgood.mat'],'isgood')
+else
+    save([h.dat.filename(1:end-4) '_isgood.mat'],'isgood');
+end
+
+disp('isgood saved.')

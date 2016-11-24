@@ -5,17 +5,24 @@ function [dcell, isroi] = run_deconvolution3(ops, dat)
 % load the initialization of the kernel    
 load(fullfile(ops.toolbox_path, 'SpikeDetection\kernel.mat'));
 
-if isfield(dat, 'cl') && isfield(dat.cl, 'iscell')
-    isroi = dat.cl.iscell;
+if isfield(dat.stat, 'igood')
+   isroi = logical([dat.stat.igood]); 
 else
-    isroi = [dat.stat.mrs]./[dat.stat.mrs0]<dat.clustrules.Compact & ...
-        [dat.stat.npix]>dat.clustrules.MinNpix & [dat.stat.npix]<dat.clustrules.MaxNpix;
+    if isfield(dat, 'cl') && isfield(dat.cl, 'iscell')
+        isroi = dat.cl.iscell;
+    else
+        isroi = [dat.stat.mrs]./[dat.stat.mrs0]<dat.clustrules.Compact & ...
+            [dat.stat.npix]>dat.clustrules.MinNpix & [dat.stat.npix]<dat.clustrules.MaxNpix;
+    end
+    isroi = logical(isroi);
 end
-isroi = logical(isroi);
 
-% if isfield(dat.stat, 'igood')
-%    isroi = logical([dat.stat.igood]);
-% end
+if 0 % consider only the first 10 cells
+    isroi = dat.cl.iscell;
+    ind_roi = find(isroi);
+    isroi(ind_roi(11):end) = false;
+    isroi = logical(isroi);
+end
 
 % construct Ff and Fneu
 Ff = [];
@@ -46,9 +53,10 @@ mode = 'custom_wfun';
 nSigs = sum(isroi);
 parfor nSig = 1:nSigs    
     disp(nSig)
-    baseF = getF_(Ff(:,nSig), mode)';
-    Ff(:,nSig) = Ff(:,nSig)./baseF;
-    Fneu(:,nSig) = Fneu(:,nSig)./baseF;
+    baseFf = getF_(Ff(:,nSig), mode)';
+    Ff(:,nSig) = Ff(:,nSig)./baseFf;
+    % baseFneu = getF_(Fneu(:,nSig), mode)';
+    Fneu(:,nSig) = Fneu(:,nSig)./baseFf;
 end
 
 % the basis functions should depend on timescale of sensor and imaging rate
@@ -104,6 +112,7 @@ for iter = 1:10
    
     % determine neuropil and cell contributions
     parfor icell = 1:size(Ff,2)
+        % fprintf('icell = %d\n',icell)
         [B(:,icell), err(icell)] = get_neurop(Ff(:,icell), Fneu(:,icell), F1(:, icell), kernelS(:,icell), npad);
     end
 %     Ball{iter} = B;
@@ -136,7 +145,8 @@ for iter = 1:10
     % determine new kernel parameters
     if ops.recomputeKernel
         if ops.sameKernel
-            B2 = mean(FfA,2)' /mean(AtA,3);
+            B2 = nanmean(FfA,2)' /mean(AtA,3);
+            % B2 = mean(FfA,2)' /mean(AtA,3);
             B2 = repmat(B2', 1, NN);
         else
             for i = 1:NN

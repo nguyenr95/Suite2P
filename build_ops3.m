@@ -7,14 +7,19 @@ for k = 1:length(db.expts)
     ops.SubDirs{k}    = num2str(db.expts(k));
 end
 
-ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date);
+if ops.doRegistration
+    ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date);
+else
+    ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date,'Corrected');
+end
+disp(ops.RootDir);
 
 % build file list
 ops.fsroot = [];
 for j = 1:length(ops.SubDirs)
     % ops.fsroot{j} = dir(fullfile(ops.RootDir, ops.SubDirs{j}, '*.tif'));
     % ops.fsroot{j} = dir(fullfile(ops.RootDir, 'Corrected', '*001.tif'));
-    ops.fsroot{j} = dir(fullfile(ops.RootDir, '*001.tif'));
+    ops.fsroot{j} = dir(fullfile(ops.RootDir, '*.tif'));
     for k = 1:length(ops.fsroot{j})
         % Do not include overview image
         if isempty(strfind(ops.fsroot{j}(k).name,'overview'));

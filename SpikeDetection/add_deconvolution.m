@@ -14,15 +14,20 @@ end
 for i = 1:length(ops.planesToProcess)
     iplane  = ops.planesToProcess(i);
     
-    fpath = sprintf('%s/F_%s_%s_plane%d_Nk%d_proc.mat', ops.ResultsSavePath, ...
+    fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d.mat', ops.ResultsSavePath, ...
         ops.mouse_name, ops.date, iplane, ops.Nk);
-    if exist(fpath, 'file')
-        load(fpath);
-    else
-        fpath = sprintf('%s/F_%s_%s_plane%d_Nk%d.mat', ops.ResultsSavePath, ...
-            ops.mouse_name, ops.date, iplane, ops.Nk);
-        dat = load(fpath);
-    end
+    dat = load(fpath);
+    
+    % fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d_proc.mat', ops.ResultsSavePath, ...
+    %     ops.mouse_name, ops.date, iplane, ops.Nk);
+    
+%     if exist(fpath, 'file')
+%         load(fpath);
+%     else
+%         fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d.mat', ops.ResultsSavePath, ...
+%             ops.mouse_name, ops.date, iplane, ops.Nk);
+%         dat = load(fpath);
+%     end
     
     if isfield(dat, 'dat')
         dat = dat.dat; % just in case trying to load processed files
@@ -38,11 +43,17 @@ for i = 1:length(ops.planesToProcess)
     
     % set up options for deconvolution
     ops.imageRate    = getOr(ops0, {'imageRate'}, 30); % total image rate (over all planes)
-    ops.sensorTau    = getOr(ops0, {'sensorTau'}, 2); % approximate timescale in seconds
+    if str2double(db.depth) < 300
+        % superficial layers
+        ops.sensorTau    = getOr(ops0, {'sensorTau'}, 2); % approximate timescale in seconds
+    else
+        % deep layers
+        ops.sensorTau    = getOr(ops0, {'sensorTau'}, 8); % approximate timescale in seconds
+    end
     ops.sameKernel   = getOr(ops0, {'sameKernel'}, 1); % 1 for same kernel per plane, 0 for individual kernels (not recommended)
     ops.sameKernel   = getOr(ops0, {'sameKernel'}, 1);
     ops.maxNeurop    = getOr(ops0, {'maxNeurop'}, Inf);
-    ops.recomputeKernel    = getOr(ops0, {'recomputeKernel'}, 0);
+    ops.recomputeKernel    = getOr(ops0, {'recomputeKernel'}, 1);
     
     
     fprintf('Spike deconvolution, plane %d... \n', iplane)
@@ -51,6 +62,9 @@ for i = 1:length(ops.planesToProcess)
     
     dat.cl.isroi = isroi;
     dat.cl.dcell = dcell;
+    
+    fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d_proc.mat', ops.ResultsSavePath, ...
+        ops.mouse_name, ops.date, iplane, ops.Nk);
     
     save(fpath, '-struct', 'dat')
 end
