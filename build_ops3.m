@@ -11,25 +11,24 @@ if ops.doRegistration
     ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date);
 else
     ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date,'Corrected');
+    % ops.RootDirRaw = fullfile(ops.RootStorage, ops.mouse_name, ops.date);
 end
 disp(ops.RootDir);
 
 % build file list
 ops.fsroot = [];
-for j = 1:length(ops.SubDirs)
-    % ops.fsroot{j} = dir(fullfile(ops.RootDir, ops.SubDirs{j}, '*.tif'));
-    % ops.fsroot{j} = dir(fullfile(ops.RootDir, 'Corrected', '*001.tif'));
-    ops.fsroot{j} = dir(fullfile(ops.RootDir, '*.tif'));
+for j = 1:ops.nplanes %length(ops.SubDirs) % changed on 16/11/25 by SK
+    ops.fsroot{j} = dir(fullfile(ops.RootDir,sprintf('*Slice%02d*.tif',j)));
+    % ops.fsroot{j} = dir(fullfile(ops.RootDir,sprintf('*Slice%02d*_File001.tif',j)));
     for k = 1:length(ops.fsroot{j})
         % Do not include overview image
         if isempty(strfind(ops.fsroot{j}(k).name,'overview'));
             ops.fsroot{j}(k).name = fullfile(ops.RootDir, ops.fsroot{j}(k).name);
-            % ops.fsroot{j}(k).name = fullfile(ops.RootDir, ops.SubDirs{j}, ops.fsroot{j}(k).name);
-            % ops.fsroot{j}(k).name = fullfile(ops.RootDir, 'Corrected', ops.fsroot{j}(k).name);
         else
-            ops.fsroot{j}(k) = [];
+            ops.fsroot{j}(k).name = [];
         end
     end
+    % ops.fsroot{j} = ops.fsroot{j}(1:10); % select some fraction of files
 end
 
 try    

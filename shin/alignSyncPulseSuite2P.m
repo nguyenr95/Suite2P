@@ -5,7 +5,7 @@ function alignSyncPulseSuite2P(varargin)
 varargin2V(varargin);
 
 if ~exist('data_file','var')
-    folder_name = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\';
+    folder_name = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\DA022\161129\';
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
     load(fullfile(PathName,ops_file));
@@ -46,10 +46,15 @@ nFramesTotal = ops.Nframes; % default num of frames
 
 switch MatlabPulseMode
     case 'analog'
+        folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA022\161129\';
+        [obj_file,PathName] = uigetfile([folder_name],'MultiSelect','off');
+        load(fullfile(PathName,obj_file));
+        obj = DA022_161129_FOV1_00001;
         samp_rate = 1e3;
         file_name = [obj.defaultDir,obj.acqName,'.h5'];
         zeroInd = strfind(file_name,'0000');
         file_name = [file_name(1:zeroInd-1),file_name(zeroInd+1:end)];
+        file_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA022\161129\FOV1_0001.h5';
         wsData = h5read(file_name,'/sweep_0001/analogScans');
         % wsData = h5read(file_name,'/trial_0001/analogScans');
 
@@ -251,6 +256,7 @@ if length(SI_sig_rise) > nFramesTotal
     block_ind = uiSelectBlock(SIsig(1:1e3:end),blockFrames);
     pick = blockFrames{block_ind};
     SI_sig_rise = SI_sig_rise(pick);
+    SI_sig_rise = SI_sig_rise(1:nFramesTotal);
 end
 
 %%%%%%%%%%% change the file path of bin files for dF extraction %%%%%%%%%%%

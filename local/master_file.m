@@ -17,7 +17,7 @@ ops0.clustModel  = 'neuropil'; % standard or neuropil
 ops0.neuropilSub = 'surround'; % none, surround or model
 
 ops0.useGPU                 = 1; % if you can use a GPU in matlab this accelerate registration approx 3 times
-ops0.doRegistration         = 1;
+ops0.doRegistration         = 0;
 % root paths for files and temporary storage (ideally an SSD drive. my SSD is C)
 ops0.RegFileTiffLocation    = []; %'D:/DATA/'; % leave empty to NOT save registered tiffs
 ops0.RegFileRoot            = 'E:\Imaging\Suite2P';
@@ -83,7 +83,7 @@ ops1.newFile    = 1; % to create new file ending _new.mat, otherwise
 
 
 %%
-for iexp = length(db)
+for iexp = length(db):length(db)
     for iplane = 1:db(iexp).nplanes
         data_file = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date,sprintf('F_%s_%s_plane%d_Nk%d.mat', db(iexp).mouse_name, db(iexp).date, iplane, ops0.Nk));
         if ~exist(data_file,'file')

@@ -175,3 +175,126 @@ db(i).nchannels     = 1;
 db(i).gchannel      = 1;
 db(i).nplanes       = 1;
 db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'DA020';
+db(i).date          = '161122';
+db(i).area          = 'PPCc';
+db(i).depth         = '120';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 3;
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'DA020';
+db(i).date          = '161124';
+db(i).area          = 'PPCm';
+db(i).depth         = '470';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 1;
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'DA020';
+db(i).date          = '161125';
+db(i).area          = 'RSPp';
+db(i).depth         = '200';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 1;
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'DA020';
+db(i).date          = '161129';
+db(i).area          = 'PPCm';
+db(i).depth         = '470';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 1;
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'LT015';
+db(i).date          = '161128';
+db(i).area          = 'RSPa';
+db(i).depth         = '100';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 1;
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'LT015';
+db(i).date          = '161129';
+db(i).area          = 'PPCc';
+db(i).depth         = '140';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 1;
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'DA022';
+db(i).date          = '161129';
+db(i).area          = 'PPCm';
+db(i).depth         = '140';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 1;
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'DA020';
+db(i).date          = '161201';
+db(i).area          = 'PPCm';
+db(i).depth         = '320';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 9; % Do not include discarded flyback frames
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+return
+
+i = i+1;
+db(i).mouse_name    = 'DA020';
+db(i).date          = '161201';
+db(i).area          = 'PPCc';
+db(i).depth         = '300';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 9; % Do not include discarded flyback frames
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+i = i+1;
+db(i).mouse_name    = 'DA020';
+db(i).date          = '161212';
+db(i).area          = 'PPCl';
+db(i).depth         = '300';
+db(i).expts         = [1];
+db(i).nchannels     = 1;
+db(i).gchannel      = 1;
+db(i).nplanes       = 9; % Do not include discarded flyback frames
+db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
+
+% i = i+1;
+% db(i).mouse_name    = 'LT015';
+% db(i).date          = '161130';
+% db(i).area          = 'PPCl';
+% db(i).depth         = '130';
+% db(i).expts         = [1];
+% db(i).nchannels     = 1;
+% db(i).gchannel      = 1;
+% db(i).nplanes       = 1;
+% db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
