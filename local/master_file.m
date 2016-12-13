@@ -6,7 +6,9 @@ cd('C:\Users\Shin\Documents\GitHub\Suite2P\local') % start this code in the dire
 % make_db_example;
 make_db;
 
-ops0.toolbox_path = 'C:\Users\Shin\Documents\GitHub\Suite2P';
+[toolbox_path,~,~] = fileparts(which('run_pipeline'));
+
+ops0.toolbox_path = toolbox_path;
 if exist(ops0.toolbox_path, 'dir')
 	addpath(ops0.toolbox_path) % add local path to the toolbox
 else
@@ -26,8 +28,11 @@ ops0.getROIs                = 1;
 ops0.getSVDcomps            = 1;
 ops0.nSVD                   = 1000; % how many SVD components to keep
 
-ops0.temp_tiff              = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\temp\temp.tiff'; % copy data locally first
-ops0.ResultsSavePath        = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P';
+ops0.temp_tiff              = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\temp\temp.tiff';
+ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P';
+
+% ops0.temp_tiff              = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\temp\temp.tiff'; % copy data locally first
+% ops0.ResultsSavePath        = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P';
 ops0.PhaseCorrelation       = 1; % set to 0 for non-whitened cross-correlation
 ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exact number from phase correlation
 

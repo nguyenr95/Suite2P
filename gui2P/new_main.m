@@ -41,7 +41,8 @@ try
     if isfield(h, 'dat') && isfield(h.dat, 'filename')
         root = fileparts(h.dat.filename);
     else
-        root = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\';
+        % root = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\';
+        root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\Documents\MATLAB\ShinDataAll\Suite2P\';
     end
     [filename1,filepath1]=uigetfile(root, 'Select Data File');
     h.dat = load(fullfile(filepath1, filename1));
