@@ -264,11 +264,9 @@ db(i).gchannel      = 1;
 db(i).nplanes       = 9; % Do not include discarded flyback frames
 db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
 
-return
-
 i = i+1;
 db(i).mouse_name    = 'DA020';
-db(i).date          = '161201';
+db(i).date          = '161205';
 db(i).area          = 'PPCc';
 db(i).depth         = '300';
 db(i).expts         = [1];
@@ -281,7 +279,7 @@ i = i+1;
 db(i).mouse_name    = 'DA020';
 db(i).date          = '161212';
 db(i).area          = 'PPCl';
-db(i).depth         = '300';
+db(i).depth         = '320';
 db(i).expts         = [1];
 db(i).nchannels     = 1;
 db(i).gchannel      = 1;
