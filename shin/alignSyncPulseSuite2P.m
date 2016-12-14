@@ -3,15 +3,25 @@ function alignSyncPulseSuite2P(varargin)
 % Align Virmen and ScanImage sync pulses
 
 varargin2V(varargin);
+% select planes to analyze
+sliceSet = [2,8];
+% sliceSet = [1,2,3,7,8,9];
 
 if ~exist('data_file','var')
-    folder_name = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\DA022\161129\';
+    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201\';
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
     load(fullfile(PathName,ops_file));
-    data_file = dir(fullfile(PathName,'*_proc.mat'));
-    ops.isgood_filename = fullfile(PathName,[data_file.name(1:end-4),'_isgood.mat']);
+    data_file = dir([PathName,'*_proc.mat']);
+    % ops.isgood_filename = fullfile(PathName,[data_file.name(1:end-4),'_isgood.mat']);
     % data = matfile(fullfile(PathName,data_file));
+end
+
+nSlices = ops.nplanes;
+if nSlices==1
+    fastZDiscardFlybackFrames = 0;
+else
+    fastZDiscardFlybackFrames = 1;
 end
 
 if ~exist('sliceNum','var')
@@ -240,7 +250,7 @@ switch MatlabPulseMode
         end
 end
 
-if length(SI_sig_rise) > nFramesTotal
+if length(SI_sig_rise) > nFramesTotal * (nSlices + fastZDiscardFlybackFrames)
     warning('The number of ScanImage sync pulses exceeds the saved number of image frames');
     init_ind  = find(diff(SI_sig_rise)>40e-3*samp_rate)+1;
     init_ind = [1,init_ind',length(SI_sig_rise)+1];
@@ -261,22 +271,36 @@ end
 
 %%%%%%%%%%% change the file path of bin files for dF extraction %%%%%%%%%%%
 if 1
-    load(fullfile(PathName,data_file.name));
-    if exist('dat','var')
-        cl = dat.cl;
-    end
-    n_cell = length(cl.dcell);
-    % isgood = cl.iscell(651:end); % changing the name because iscell is MATLAB function
-    dcell = cl.dcell;
-    
-%     if n_cell ~= (length(cl.iscell)-650)
-%         error('n_cell does not match the # of deconvolved cells!')
-%     end
-    
-    if 0
-        sp = zeros(n_cell,nFramesTotal);
-        for ci = 1:n_cell
-            sp(ci,cl.dcell{ci}.st) = cl.dcell{ci}.c;
+    tstart = tic;
+    dcell = [];
+    cell_slice = [];
+    for si = 1:nSlices
+        if ismember(si,sliceSet)
+            if nSlices==1
+                load(fullfile(PathName,data_file.name));
+            else
+                load(fullfile(PathName,data_file(si).name));
+            end
+            if exist('dat','var')
+                cl = dat.cl;
+            end
+            n_cell = length(cl.dcell);
+            % isgood = cl.iscell(651:end); % changing the name because iscell is MATLAB function
+            dcell = [dcell;cl.dcell];
+            cell_slice = [cell_slice;si*ones(n_cell,1)];
+
+        %     if n_cell ~= (length(cl.iscell)-650)
+        %         error('n_cell does not match the # of deconvolved cells!')
+        %     end
+
+            if 0
+                sp = zeros(n_cell,nFramesTotal);
+                for ci = 1:n_cell
+                    sp(ci,cl.dcell{ci}.st) = cl.dcell{ci}.c;
+                end
+            end
+            telapsed(si) = toc(tstart);
+            fprintf('loaded slice %02d in %d sec',si,telapsed(si))
         end
     end
 end
@@ -294,17 +318,16 @@ NI_time_stamp_ms = NI_time_stamp*1e3/samp_rate;
 SI_time_stamp_ms = SI_sig_rise*1e3/samp_rate;
 
 % select time-stamps for the corresponding slice
-nSlices = ops.nplanes;
+
 for si = 1:nSlices
-    
-    pick_frame = false(1,nFramesTotal);
+    pick_frame = false(nSlices,nFramesTotal);
 
     if length(SI_time_stamp_ms) >= nFramesTotal;
-        pick_frame(si,sliceNum:nSlices:nFramesTotal) = true;
+        pick_frame(si,si:(nSlices+fastZDiscardFlybackFrames):nFramesTotal) = true;
         % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
     else
         % if Sync recording was stopped before the end of imaging session.
-        pick_frame(si,sliceNum:nSlices:length(SI_time_stamp_ms)) = true;
+        pick_frame(si,si:(nSlices+fastZDiscardFlybackFrames):length(SI_time_stamp_ms)) = true;
         % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
     end
 
@@ -325,21 +348,26 @@ for si = 1:nSlices
         pick_frame(si,:) = pick_frame(si,:) & pick_afterVRstart;
         warning('First %d frames are not included in the analysis.\n',ind-1);
     end
-
-    % pick appropriate ScanImage time stamps
-    SI_time_stamp_ms_pick = SI_time_stamp_ms(pick_frame(si,1:length(SI_time_stamp_ms)));
-
-    for i = 1:size(data,1)
-        temp = interp1(NI_time_stamp_ms,data(i,:),SI_time_stamp_ms_pick);
-        interpData(i,:) = temp;
-    end
-
-    TM{si} = [SI_time_stamp_ms_pick;interpData];
-    
 end
+
+% pick appropriate ScanImage time stamps
+% SI_time_stamp_ms_pick = SI_time_stamp_ms(pick_frame(si,:));
+
+for i = 1:size(data,1)
+    temp = interp1(NI_time_stamp_ms,data(i,:),SI_time_stamp_ms);
+    interpData(i,:) = temp;
+end
+
+data.TM = [SI_time_stamp_ms;interpData];
+data.pick_frame = pick_frame;
+data.dcell = dcell;
+data.cell_slice = cell_slice;
+data.nSlices = nSlices;
+data.fastZDiscardFlybackFrames = fastZDiscardFlybackFrames;
+    
 % FOV1_001_Slice03_Channel01_File001
-save_name = sprintf('Slice%02d_Channel%02d_sessionData.mat',sliceNum,channelNum);
-save(fullfile(PathName,save_name),'TM','pick_frame','dcell','ops');
+save_name = sprintf('Slice%02d_Channel%02d_sessionData.mat',nSlices,channelNum);
+save(fullfile(PathName,save_name),'TM','data','ops');
 if exist('roiList','var')
     save(fullfile(PathName,save_name),'roiList','-append');
 end

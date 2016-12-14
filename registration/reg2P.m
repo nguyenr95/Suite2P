@@ -226,10 +226,10 @@ for k = 1 %:length(fs) % changed on 16/11/25 by SK
                 ops1{i,l}.Nframes(k) = ops1{i,l}.Nframes(k) + size(dwrite,3);
                 ops1{i,l}.mimg1 = ops1{i,l}.mimg1 + sum(dwrite,3);
             end
+            if rem(j,5)==1
+                fprintf('Plane %d, tiff %d done in time %2.2f \n', i, j, toc)            
+            end
         end
-    end
-    if rem(j,5)==1
-        fprintf('Set %d, tiff %d done in time %2.2f \n', k, j, toc)            
     end
     iplane0 = iplane0 - nFr/nchannels;
 end

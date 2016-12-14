@@ -1,7 +1,7 @@
 %% SET ALL DEFAULT OPTIONS HERE
 % check out the README file for detailed instructions (and extra options)
 
-cd('C:\Users\Shin\Documents\GitHub\Suite2P\local') % start this code in the directory with make_db
+% cd('C:\Users\Shin\Documents\GitHub\Suite2P\local') % start this code in the directory with make_db
 
 % make_db_example;
 make_db;
@@ -88,7 +88,7 @@ ops1.newFile    = 1; % to create new file ending _new.mat, otherwise
 
 
 %%
-for iexp = length(db):length(db)
+for iexp = length(db)-1:length(db)-1
     for iplane = 1:db(iexp).nplanes
         data_file = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date,sprintf('F_%s_%s_plane%d_Nk%d.mat', db(iexp).mouse_name, db(iexp).date, iplane, ops0.Nk));
         if ~exist(data_file,'file')
