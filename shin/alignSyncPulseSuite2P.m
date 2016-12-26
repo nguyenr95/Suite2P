@@ -8,7 +8,8 @@ sliceSet = [2,8];
 % sliceSet = [1,2,3,7,8,9];
 
 if ~exist('data_file','var')
-    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201\';
+    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161117\';
+    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201_LK\';
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
     load(fullfile(PathName,ops_file));
@@ -20,9 +21,11 @@ end
 nSlices = ops.nplanes;
 if nSlices==1
     fastZDiscardFlybackFrames = 0;
+    sliceSet = 1;
 else
     fastZDiscardFlybackFrames = 1;
 end
+nSlices = nSlices - fastZDiscardFlybackFrames;
 
 if ~exist('sliceNum','var')
     sliceNum = 1;
@@ -31,8 +34,6 @@ end
 if ~exist('channelNum','var')
     channelNum = 1;
 end
-
-roiGroups = [1:20];
 
 chunk_size = 1e6;
 
@@ -52,7 +53,7 @@ switch vr.computerID
         MatlabPulseMode = 'digital';
 end
 
-nFramesTotal = ops.Nframes; % default num of frames
+nFramesTotal = ops.Nframes * ops.nplanes; % default num of frames
 
 switch MatlabPulseMode
     case 'analog'
@@ -269,6 +270,49 @@ if length(SI_sig_rise) > nFramesTotal * (nSlices + fastZDiscardFlybackFrames)
     SI_sig_rise = SI_sig_rise(1:nFramesTotal);
 end
 
+if iscolumn(NI_time_stamp)
+    NI_time_stamp = NI_time_stamp';
+end
+if iscolumn(SI_sig_rise)
+    SI_sig_rise = SI_sig_rise';
+end
+
+% convert time-stamp indices to ms
+NI_time_stamp_ms = NI_time_stamp*1e3/samp_rate;
+SI_time_stamp_ms = SI_sig_rise*1e3/samp_rate;
+
+
+% select time-stamps for the corresponding slice
+pick_frame = false(nSlices,nFramesTotal);
+for si = 1:nSlices
+    if length(SI_time_stamp_ms) >= nFramesTotal;
+        pick_frame(si,si:(nSlices+fastZDiscardFlybackFrames):nFramesTotal) = true;
+        % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
+    else
+        % if Sync recording was stopped before the end of imaging session.
+        pick_frame(si,si:(nSlices+fastZDiscardFlybackFrames):length(SI_time_stamp_ms)) = true;
+        % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
+    end
+
+    % if Virmen was stopped before the end of imaging session
+    if NI_time_stamp_ms(end) < SI_time_stamp_ms(end);
+        ind = find(SI_time_stamp_ms>NI_time_stamp_ms(end),1,'first');
+        pick_beforeVRend = false(1,nFramesTotal);
+        pick_beforeVRend(1:ind-1) = true;
+        pick_frame(si,:) = pick_frame(si,:) & pick_beforeVRend;
+        % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
+    end
+
+    if 1
+        % include only after the initiation of Virmen
+        ind = find(SI_time_stamp_ms>NI_time_stamp_ms(1),1,'first');
+        pick_afterVRstart = false(1,nFramesTotal);
+        pick_afterVRstart(ind:end) = true;
+        pick_frame(si,:) = pick_frame(si,:) & pick_afterVRstart;
+        warning('First %d frames are not included in the analysis.\n',ind-1);
+    end
+end
+
 %%%%%%%%%%% change the file path of bin files for dF extraction %%%%%%%%%%%
 if 1
     tstart = tic;
@@ -300,58 +344,12 @@ if 1
                 end
             end
             telapsed(si) = toc(tstart);
-            fprintf('loaded slice %02d in %d sec',si,telapsed(si))
+            fprintf('loaded slice %02d in %d sec\n',si,round(telapsed(si)))
         end
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if iscolumn(NI_time_stamp)
-    NI_time_stamp = NI_time_stamp';
-end
-if iscolumn(SI_sig_rise)
-    SI_sig_rise = SI_sig_rise';
-end
-
-% convert time-stamp indices to ms
-NI_time_stamp_ms = NI_time_stamp*1e3/samp_rate;
-SI_time_stamp_ms = SI_sig_rise*1e3/samp_rate;
-
-% select time-stamps for the corresponding slice
-
-for si = 1:nSlices
-    pick_frame = false(nSlices,nFramesTotal);
-
-    if length(SI_time_stamp_ms) >= nFramesTotal;
-        pick_frame(si,si:(nSlices+fastZDiscardFlybackFrames):nFramesTotal) = true;
-        % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
-    else
-        % if Sync recording was stopped before the end of imaging session.
-        pick_frame(si,si:(nSlices+fastZDiscardFlybackFrames):length(SI_time_stamp_ms)) = true;
-        % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
-    end
-
-    % if Virmen was stopped before the end of imaging session
-    if NI_time_stamp_ms(end) < SI_time_stamp_ms(end);
-        ind = find(SI_time_stamp_ms>NI_time_stamp_ms(end),1,'first');
-        pick_beforeVRend = false(1,nFramesTotal);
-        pick_beforeVRend(1:ind-1) = true;
-        pick_frame(si,:) = pick_frame(si,:) & pick_beforeVRend;
-        % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
-    end
-
-    if 1
-        % include only after the initiation of Virmen
-        ind = find(SI_time_stamp_ms>NI_time_stamp_ms(1),1,'first');
-        pick_afterVRstart = false(1,nFramesTotal);
-        pick_afterVRstart(ind:end) = true;
-        pick_frame(si,:) = pick_frame(si,:) & pick_afterVRstart;
-        warning('First %d frames are not included in the analysis.\n',ind-1);
-    end
-end
-
-% pick appropriate ScanImage time stamps
-% SI_time_stamp_ms_pick = SI_time_stamp_ms(pick_frame(si,:));
 
 for i = 1:size(data,1)
     temp = interp1(NI_time_stamp_ms,data(i,:),SI_time_stamp_ms);
@@ -364,10 +362,12 @@ data.dcell = dcell;
 data.cell_slice = cell_slice;
 data.nSlices = nSlices;
 data.fastZDiscardFlybackFrames = fastZDiscardFlybackFrames;
+data.V = dat.img0.V;
+data.iclust = dat.res.iclust;
     
 % FOV1_001_Slice03_Channel01_File001
 save_name = sprintf('Slice%02d_Channel%02d_sessionData.mat',nSlices,channelNum);
-save(fullfile(PathName,save_name),'TM','data','ops');
+save(fullfile(PathName,save_name),'data','ops');
 if exist('roiList','var')
     save(fullfile(PathName,save_name),'roiList','-append');
 end

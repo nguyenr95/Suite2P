@@ -88,7 +88,7 @@ ops1.newFile    = 1; % to create new file ending _new.mat, otherwise
 
 
 %%
-for iexp = length(db)-1:length(db)-1
+for iexp = length(db)-2:length(db)-2
     for iplane = 1:db(iexp).nplanes
         data_file = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date,sprintf('F_%s_%s_plane%d_Nk%d.mat', db(iexp).mouse_name, db(iexp).date, iplane, ops0.Nk));
         if ~exist(data_file,'file')

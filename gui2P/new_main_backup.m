@@ -143,17 +143,15 @@ else
     h = buildLambdaValue(h);
     
     % loop through redcells and set h.dat.cl.rands(h.dat.F.ichosen) = 0
-    if ~isempty(find(h.dat.cl.redcell,1))
-        for j = find(h.dat.cl.redcell)
-            h.dat.F.ichosen = j;
-            h.dat.cl.rands(h.dat.F.ichosen) = 0;
-        end
+    for j = find(h.dat.cl.redcell)
+        h.dat.F.ichosen = j;
+        h.dat.cl.rands(h.dat.F.ichosen) = 0;
     end
-%     if ~isempty(icell)
-%         h.dat.F.ichosen = icell(1); %ceil(rand * numel(icell))
-%     else
-%         h.dat.F.ichosen = 1; %ceil(rand * numel(icell))
-%     end
+    if ~isempty(icell)
+        h.dat.F.ichosen = icell(1); %ceil(rand * numel(icell))
+    else
+        h.dat.F.ichosen = 1; %ceil(rand * numel(icell))
+    end
     h = buildHue(h);
     h = buildLambdaValue(h);
     
@@ -163,20 +161,32 @@ else
     h.dat.figure.x1all = round(linspace(1/20 * h.dat.cl.Lx, h.dat.cl.Lx, 4));
     h.dat.figure.y1all = round(linspace(1/20 * h.dat.cl.Ly, h.dat.cl.Ly, 4));
     
-%     if ~isempty(h.dat.Fcell) % added by SK 16/11/04
-%         h.dat.F.Fcell = h.dat.Fcell; h.dat.Fcell = [];
-%     end
+    if ~isempty(h.dat.Fcell) % added by SK 16/11/04
+        h.dat.F.Fcell = h.dat.Fcell; h.dat.Fcell = [];
+    end
     
     if isfield(h.dat, 'FcellNeu')
-%         if ~isempty(h.dat.FcellNeu) % added by SK 16/11/04
-%             h.dat.F.FcellNeu = h.dat.FcellNeu; h.dat.FcellNeu = [];
-%         end
-        if mean(sign(h.dat.FcellNeu{1}(:)))<0
-            for j = 1:length(h.dat.FcellNeu)
-                h.dat.FcellNeu{j} = - h.dat.FcellNeu{j};
-                h.dat.Fcell{j} = h.dat.Fcell{j} + h.dat.FcellNeu{j};
+        if ~isempty(h.dat.FcellNeu) % added by SK 16/11/04
+            h.dat.F.FcellNeu = h.dat.FcellNeu; h.dat.FcellNeu = [];
+        end
+        if mean(sign(h.dat.F.FcellNeu{1}(:)))<0
+            for j = 1:length(h.dat.F.FcellNeu)
+                h.dat.F.FcellNeu{j} = - h.dat.F.FcellNeu{j};
+                h.dat.F.Fcell{j} = h.dat.F.Fcell{j} + h.dat.F.FcellNeu{j};
             end
         end    
+        
+%         if isfield(h.dat.cl, 'dcell')
+%             for k = 1:length(h.dat.cl.dcell)
+%                 for j = 1:length(h.dat.F.FcellNeu)
+%                     if isfield(h.dat.cl.dcell{k}, 'B')
+%                         c2 = h.dat.cl.dcell{k}.B(3);
+%                         c1 = h.dat.cl.dcell{k}.B(2);
+%                         h.dat.F.FcellNeu{j}(k+Nk, :) = c1 + c2 * h.dat.F.FcellNeu{j}(k+Nk, :);
+%                     end
+%                 end
+%             end
+%         end
     end
 end
 
@@ -202,13 +212,13 @@ h.dat.procmap = 0;
 
 h.dat.map = 1;
 h.dat.F.trace = [];
-for i = 1:length(h.dat.Fcell)
-    h.dat.F.trace = cat(2, h.dat.F.trace, h.dat.Fcell{i});
+for i = 1:length(h.dat.F.Fcell)
+    h.dat.F.trace = cat(2, h.dat.F.trace, h.dat.F.Fcell{i});
 end
 if isfield(h.dat.F, 'FcellNeu')
     h.dat.F.neurop = [];
-    for i = 1:length(h.dat.FcellNeu)
-        h.dat.F.neurop = cat(2, h.dat.F.neurop, h.dat.FcellNeu{i});
+    for i = 1:length(h.dat.F.FcellNeu)
+        h.dat.F.neurop = cat(2, h.dat.F.neurop, h.dat.F.FcellNeu{i});
     end    
     
 else
@@ -492,7 +502,6 @@ end
 
 function edit35_Callback(hObject, eventdata, h)
 h.dat.res.Mrs_thresh = str2double(get(h.edit35,'String'));
-h.dat.clustrules.Compact = h.dat.res.Mrs_thresh;
 h = splitROIleftright(h);
 h = buildLambdaValue(h);
 redraw_figure(h);
@@ -511,17 +520,16 @@ function pushbutton74_Callback(hObject, eventdata, h)
 function pushbutton75_Callback(hObject, eventdata, h)
 function pushbutton83_Callback(hObject, eventdata, h)
 function pushbutton84_Callback(hObject, eventdata, h)
-
-h.dat = rmfield(h.dat,'F');
+h.dat.F.trace = [];
 dat = h.dat;
 isgood = dat.cl.iscell;
 
 if isempty(strfind(h.dat.filename,'_proc'))
     save([h.dat.filename(1:end-4) '_proc_isgood.mat'],'isgood')
-    save([h.dat.filename(1:end-4) '_proc.mat'],'-struct','dat')
+    save([h.dat.filename(1:end-4) '_proc.mat'],'dat','-v7.3')
 else
     save([h.dat.filename(1:end-4) '_isgood.mat'],'isgood')
-    save(h.dat.filename,'-struct','dat')
+    save(h.dat.filename,'dat','-v7.3')
 end
 
 function pushbutton79_Callback(hObject, eventdata, h)
@@ -529,7 +537,6 @@ function pushbutton80_Callback(hObject, eventdata, h)
 
 function edit39_Callback(hObject, eventdata, h)
 h.dat.cl.npix_high = str2double(get(h.edit39,'String'));
-h.dat.clustrules.MaxNpix = h.dat.cl.npix_high;
 h = splitROIleftright(h);
 h = buildLambdaValue(h);
 redraw_figure(h);
@@ -543,7 +550,6 @@ end
 
 function edit40_Callback(hObject, eventdata, h)
 h.dat.cl.npix_low = str2double(get(h.edit40,'String'));
-h.dat.clustrules.MinNpix = h.dat.cl.npix_low;
 h = splitROIleftright(h);
 h = buildLambdaValue(h);
 redraw_figure(h);
