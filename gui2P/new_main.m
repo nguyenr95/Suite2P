@@ -161,23 +161,7 @@ else
     h.dat.figure.x0all = round(linspace(0, 19/20*h.dat.cl.Lx, 4));
     h.dat.figure.y0all = round(linspace(0, 19/20*h.dat.cl.Ly, 4));
     h.dat.figure.x1all = round(linspace(1/20 * h.dat.cl.Lx, h.dat.cl.Lx, 4));
-    h.dat.figure.y1all = round(linspace(1/20 * h.dat.cl.Ly, h.dat.cl.Ly, 4));
-    
-%     if ~isempty(h.dat.Fcell) % added by SK 16/11/04
-%         h.dat.F.Fcell = h.dat.Fcell; h.dat.Fcell = [];
-%     end
-    
-    if isfield(h.dat, 'FcellNeu')
-%         if ~isempty(h.dat.FcellNeu) % added by SK 16/11/04
-%             h.dat.F.FcellNeu = h.dat.FcellNeu; h.dat.FcellNeu = [];
-%         end
-        if mean(sign(h.dat.FcellNeu{1}(:)))<0
-            for j = 1:length(h.dat.FcellNeu)
-                h.dat.FcellNeu{j} = - h.dat.FcellNeu{j};
-                h.dat.Fcell{j} = h.dat.Fcell{j} + h.dat.FcellNeu{j};
-            end
-        end    
-    end
+    h.dat.figure.y1all = round(linspace(1/20 * h.dat.cl.Ly, h.dat.cl.Ly, 4));    
 end
 
 h.dat.maxmap = 1;

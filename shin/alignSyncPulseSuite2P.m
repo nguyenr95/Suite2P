@@ -4,15 +4,16 @@ function alignSyncPulseSuite2P(varargin)
 
 varargin2V(varargin);
 % select planes to analyze
-sliceSet = [2,8];
+% sliceSet = [2,8];
 % sliceSet = [1,2,3,7,8,9];
 
 if ~exist('data_file','var')
-    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161117\';
+    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161221\';
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201_LK\';
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
     load(fullfile(PathName,ops_file));
+    ops0 = ops;
     data_file = dir([PathName,'*_proc.mat']);
     % ops.isgood_filename = fullfile(PathName,[data_file.name(1:end-4),'_isgood.mat']);
     % data = matfile(fullfile(PathName,data_file));
@@ -26,6 +27,11 @@ else
     fastZDiscardFlybackFrames = 1;
 end
 nSlices = nSlices - fastZDiscardFlybackFrames;
+
+if ~exist('acqName','var')
+    acqName = 'FOV1';
+end
+
 
 if ~exist('sliceNum','var')
     sliceNum = 1;
@@ -325,8 +331,10 @@ if 1
             else
                 load(fullfile(PathName,data_file(si).name));
             end
-            if exist('dat','var')
+            if exist('dat','var') % for older files
                 cl = dat.cl;
+                img0 = dat.img0;
+                res = dat.res;
             end
             n_cell = length(cl.dcell);
             % isgood = cl.iscell(651:end); % changing the name because iscell is MATLAB function
@@ -362,11 +370,12 @@ data.dcell = dcell;
 data.cell_slice = cell_slice;
 data.nSlices = nSlices;
 data.fastZDiscardFlybackFrames = fastZDiscardFlybackFrames;
-data.V = dat.img0.V;
-data.iclust = dat.res.iclust;
+data.V = img0.V;
+data.iclust = res.iclust;
+ops = ops0;
     
 % FOV1_001_Slice03_Channel01_File001
-save_name = sprintf('Slice%02d_Channel%02d_sessionData.mat',nSlices,channelNum);
+save_name = sprintf('%s_Slice%02d_Channel%02d_sessionData.mat',acqName,nSlices,channelNum);
 save(fullfile(PathName,save_name),'data','ops');
 if exist('roiList','var')
     save(fullfile(PathName,save_name),'roiList','-append');
