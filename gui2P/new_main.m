@@ -747,6 +747,7 @@ h = buildLambdaValue(h);
 
 guidata(hObject,h);
 redraw_figure(h);
+h;
 
 
 

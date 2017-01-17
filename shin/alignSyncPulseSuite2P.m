@@ -324,6 +324,8 @@ if 1
     tstart = tic;
     dcell = [];
     cell_slice = [];
+    dF = [];
+    dFsp_all = [];
     for si = 1:nSlices
         if ismember(si,sliceSet)
             if nSlices==1
@@ -335,15 +337,14 @@ if 1
                 cl = dat.cl;
                 img0 = dat.img0;
                 res = dat.res;
+                Fcell = dat.F.Fcell;
             end
             n_cell = length(cl.dcell);
             % isgood = cl.iscell(651:end); % changing the name because iscell is MATLAB function
             dcell = [dcell;cl.dcell];
             cell_slice = [cell_slice;si*ones(n_cell,1)];
-
-        %     if n_cell ~= (length(cl.iscell)-650)
-        %         error('n_cell does not match the # of deconvolved cells!')
-        %     end
+            dF = cat(2,dF,Fcell{1}(ops0.Nk+1:end,:));
+            dFsp_all = cat(2,dFsp_all,dFsp);
 
             if 0
                 sp = zeros(n_cell,nFramesTotal);
@@ -365,6 +366,8 @@ for i = 1:size(data,1)
 end
 
 data.TM = [SI_time_stamp_ms;interpData];
+% data.dF = dF;
+data.dFsp = dFsp;
 data.pick_frame = pick_frame;
 data.dcell = dcell;
 data.cell_slice = cell_slice;
