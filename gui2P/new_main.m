@@ -534,11 +534,7 @@ else
     set(h.pushbutton86, 'BackgroundColor', .94 * [1 1 1]); 
 end
 guidata(hObject,h);
-<<<<<<< HEAD
 redraw_figure(h);
-h;
-=======
->>>>>>> refs/remotes/cortex-lab/master
 
 
 function set_Bcolor(h, ih)
