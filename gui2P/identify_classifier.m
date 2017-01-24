@@ -65,12 +65,16 @@ if FileName
     st = [];
     save(fullfile(PathName, FileName), 'st', 'prior', 'statLabels')
     
+    h.st = st;
+    h.prior = prior;
+    h.statLabels = statLabels;
+    
     h.dat.cl.fpath          = fullfile(PathName, FileName);
     h                       = classROI(h);
     
-    h = splitROIleftright(h);
-    h = buildLambdaValue(h);
-    redraw_figure(h);
+%     h = splitROIleftright(h);
+%     h = buildLambdaValue(h);
+%     redraw_figure(h);
     
     hload = load(h.dat.cl.fpath);
     h.st        = hload.st;

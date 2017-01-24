@@ -1,3 +1,4 @@
+% registers frames using block registration in Y
 function ops1 = blockReg2P(ops)
 %%
 if ops.doRegistration
@@ -6,7 +7,7 @@ else
     disp('skipping registration, but assembling binary file');
 end
 
-% default is 8 blocks of 100 pixels each
+% default is 8 blocks of 1/6 pixels each
 ops.numBlocks      = getOr(ops, {'numBlocks'}, 8);
 numBlocks          = ops.numBlocks;
 numPlanes = length(ops.planesToProcess);
@@ -22,7 +23,7 @@ LoadRegMean        = getOr(ops, {'LoadRegMean'}, 0);
 ops.RegFileBinLocation = getOr(ops, {'RegFileBinLocation'}, []);
 ops.splitFOV           = getOr(ops, {'splitFOV'}, [1 1]);
 ops.RegFileTiffLocation = getOr(ops, {'RegFileTiffLocation'}, []);
-
+ops.dobidi         = getOr(ops, {'dobidi'}, 1);
 
 fs = ops.fsroot;
 
@@ -43,9 +44,14 @@ if ops.doRegistration
     fprintf('--- %d pixels/block; avg pixel overlap = %d pixels\n', round(ops.blockFrac*Ly), round(ops.pixoverlap));
 
     % compute phase shifts from bidirectional scanning
-    BiDiPhase = BiDiPhaseOffsets(IMG);
+    if ops.dobidi
+        BiDiPhase = BiDiPhaseOffsets(IMG);
+    else
+        BiDiPhase = 0;
+    end
     fprintf('bi-directional scanning offset = %d pixels\n', BiDiPhase);
-    if BiDiPhase
+   
+    if abs(BiDiPhase) > 0
         yrange = 2:2:Ly;
         if BiDiPhase>0
             IMG(yrange,(1+BiDiPhase):Lx,:,:) = IMG(yrange, 1:(Lx-BiDiPhase),:,:);
@@ -53,7 +59,6 @@ if ops.doRegistration
             IMG(yrange,1:Lx+BiDiPhase,:,:)   = IMG(yrange, 1-BiDiPhase:Lx,:,:);
         end
     end
-    
     for i = 1:numPlanes
         ops1{i} = blockAlignIterative(squeeze(IMG(:,:,ops.planesToProcess(i),:)), ops);
     end
@@ -110,7 +115,7 @@ for k = 1:length(fs)
         end
         data = loadFramesBuff(fs{k}(j).name, ichanset(1), ichanset(2), ichanset(3), ops.temp_tiff);
 
-        if BiDiPhase
+        if abs(BiDiPhase) > 0
             yrange = 2:2:Ly;
             if BiDiPhase>0
                 data(yrange, (1+BiDiPhase):Lx,:) = data(yrange, 1:(Lx-BiDiPhase),:);
@@ -162,7 +167,7 @@ for k = 1:length(fs)
     end    
 end
 
-%%
+%% write binary file to tiffs if ~isempty(ops.RegFileTiffLocation)
 for i = 1:numPlanes    
     fclose(fid{i});
     fid{i}           = fopen(ops1{i}.RegFile, 'r');
@@ -195,6 +200,10 @@ end
 % compute xrange, yrange
 for i = 1:numPlanes
     if ops.doRegistration
+%         badi                    = getOutliers(ops1{i}); 
+%         ops1{i}.badframes(badi) = true;
+        ops1{i}.badframes = false(sum(ops1{i}.Nframes), 1);
+        
         %         minDs = min(min(ops1{i}.DS(2:end, :,:), [], 3), [], 1);
         %         maxDs = max(max(ops1{i}.DS(2:end, :,:), [], 3), [], 1);
         ops1{i}.yrange  = find(xyValid(:, ceil(Lx/2)));
