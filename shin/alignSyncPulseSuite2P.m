@@ -8,9 +8,9 @@ varargin2V(varargin);
 % sliceSet = [1,2,3,7,8,9];
 
 if ~exist('data_file','var')
-    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161221\';
+    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161221\';
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201_LK\';
-    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
+    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
     load(fullfile(PathName,ops_file));
     ops0 = ops;
@@ -359,7 +359,6 @@ if 1
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 for i = 1:size(data,1)
     temp = interp1(NI_time_stamp_ms,data(i,:),SI_time_stamp_ms);
     interpData(i,:) = temp;
@@ -367,7 +366,7 @@ end
 
 data.TM = [SI_time_stamp_ms;interpData];
 % data.dF = dF;
-data.dFsp = dFsp;
+data.dFsp = dFsp_all;
 data.pick_frame = pick_frame;
 data.dcell = dcell;
 data.cell_slice = cell_slice;
