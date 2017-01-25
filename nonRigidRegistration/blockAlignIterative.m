@@ -1,4 +1,4 @@
-function ops = blockAlignIterative(data, ops)
+function ops = blockAlignIterative(data, ops, xyMask)
 
 % uu = squeeze(sum(sum(data(:,:,:).^2,1),2));
 % [~, isort] = sort(uu, 'descend');
@@ -12,6 +12,7 @@ dsold = zeros(size(data,3), 2, numBlocks);
 err = zeros(ops.NiterPrealign, 1);
 %%
 tempSubPixel = ops.SubPixel;
+ops.SubPixel = Inf;
 for i = 1:ops.NiterPrealign    
     dsnew = zeros(size(data,3), 2, numBlocks,'double');
     Corr = zeros(size(data,3), numBlocks,'double');
@@ -21,12 +22,12 @@ for i = 1:ops.NiterPrealign
         ops.mimg = mimg(ops.yBL{ib},ops.xBL{ib});
         
         [dsnew(:,:,ib), Corr(:,ib)]  = ...
-            regoffKriging(data(ops.yBL{ib},ops.xBL{ib},:), ops, 1);
+            registration_offsets(data(ops.yBL{ib},ops.xBL{ib},:), ops, 1);
     end
     
     %     [dsnew, Corr]  = registration_offsets(data, ops, 1);
     
-    dreg = blockRegisterMovieSmooth(data, ops, dsnew);
+    dreg = blockRegisterMovie(data, xyMask, dsnew);
     
 %     dreg  = register_movie(data, ops, dsnew);
     

@@ -75,14 +75,14 @@ ntifs = ceil(500/length(fsRED));
 
 %
 DS = cell(ops.nplanes, 1);
-try
-    root = ops.ResultsSavePath;
-    fname = sprintf('regops_%s_%s.mat', ops.mouse_name, ops.date);
-    load(fullfile(root, fname))
-    for j = 1:ops.nplanes
-        DS{j} = ops1{j}.DS;
-    end
-catch       
+for j = 1:ops.nplanes
+   try 
+       root = ops.ResultsSavePath;
+       fname = sprintf('regops_%s_%s_plane%d.mat', ops.mouse_name, ops.date, j);
+       load(fullfile(root, fname))
+       DS{j} = ops.DS;
+   catch       
+   end
 end
 %
 ntf0 = 0;
@@ -109,7 +109,7 @@ for k = 1:length(fsRED)
         mimgR = mimgR + mean(data(:,:,iplane0,:), 4);            
         ntf0 = ntf0 + 1;
         
-        nFr = nFramesTiff(fsRED{k});
+        nFr = img.nFrames(fsRED{k});
         iplane0 = iplane0 - nFr/ops.nchannels_red;
         
 %         keyboard;

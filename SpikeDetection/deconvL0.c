@@ -1,7 +1,6 @@
 #include "mex.h"
 #include <math.h>
 #include "matrix.h"
-#define max(a,b) ((a) > (b) ? (a) : (b))
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
         const mxArray *prhs[]){

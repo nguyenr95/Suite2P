@@ -1,81 +1,133 @@
-% registers frames using block registration in Y
 function ops1 = blockReg2P(ops)
 %%
-if ops.doRegistration
-    disp('running non-rigid registration');
-else
-    disp('skipping registration, but assembling binary file');
-end
-
-% default is 8 blocks of 1/6 pixels each
-ops.numBlocks      = getOr(ops, {'numBlocks'}, 8);
-numBlocks          = ops.numBlocks;
+% iplane = ops.iplane;
+% bitspersamp = 16;
 numPlanes = length(ops.planesToProcess);
-ops.numPlanes = numPlanes;
-chunk_align        = getOr(ops, {'chunk_align'}, 1);
-nplanes            = getOr(ops, {'nplanes'}, 1);
-nchannels          = getOr(ops, {'nchannels'}, 1);
-ichannel           = getOr(ops, {'gchannel'}, 1);
-rchannel           = getOr(ops, {'rchannel'}, 2);
-red_align   = getOr(ops, {'AlignToRedChannel'}, 0);
-BiDiPhase          = getOr(ops, {'BiDiPhase'}, 0);
-LoadRegMean        = getOr(ops, {'LoadRegMean'}, 0);
-ops.RegFileBinLocation = getOr(ops, {'RegFileBinLocation'}, []);
-ops.splitFOV           = getOr(ops, {'splitFOV'}, [1 1]);
+
 ops.RegFileTiffLocation = getOr(ops, {'RegFileTiffLocation'}, []);
-ops.dobidi         = getOr(ops, {'dobidi'}, 1);
+if isfield(ops, 'chunk_align') && ~isempty(ops.chunk_align); chunk_align   = ops.chunk_align(1);
+else chunk_align = 1; end
+if isfield(ops, 'nplanes') && ~isempty(ops.nplanes); nplanes   = ops.nplanes;
+else nplanes = 1; end
+if isfield(ops, 'nchannels') && ~isempty(ops.nchannels); nchannels   = ops.nchannels;
+else nchannels = 1; end
+if isfield(ops, 'gchannel') && ~isempty(ops.gchannel); ichannel    = ops.gchannel;
+else ichannel = 1; end
+if nchannels>2 && isfield(ops, 'rchannel') && ~isempty(ops.rchannel); rchannel   = ops.rchannel;
+else rchannel = 2; end
+if isfield(ops, 'AlignToRedChannel') && ~isempty(ops.AlignToRedChannel); red_align = ops.AlignToRedChannel;
+else red_align = 0; end
+if isfield(ops, 'BiDiPhase') && ~isempty(ops.BiDiPhase); BiDiPhase = ops.BiDiPhase;
+else BiDiPhase = 0; end
+if isfield(ops, 'LoadRegMean') && ~isempty(ops.LoadRegMean); LoadRegMean = ops.LoadRegMean;
+else LoadRegMean = 0; end
+
+splitTaper     = getOr(ops, {'splitTaper'}, 20);
 
 fs = ops.fsroot;
 
-try
-   IMG = loadFramesBuff(fs{1}(1).name, 1, 1, 1); 
-catch
-    error('could not find any tif or tiff, check your path');
-end
+
 
 %% find the mean frame after aligning a random subset
-if ops.doRegistration
-    [IMG] = GetRandFrames(fs, ops);    
-    [Ly, Lx, ~, ~] = size(IMG);
-    ops.Ly = Ly;
-    ops.Lx = Lx;
-    ops = MakeBlocks(ops);
-    fprintf('--- using %d blocks in Y\n', numBlocks);
-    fprintf('--- %d pixels/block; avg pixel overlap = %d pixels\n', round(ops.blockFrac*Ly), round(ops.pixoverlap));
+ntifs = sum(cellfun(@(x) numel(x), fs));
+nfmax = floor(ops.NimgFirstRegistration/ntifs);
+if nfmax>=2000
+    nfmax = 1999;
+end
+nbytes = fs{1}(1).bytes;
+nFr = nFrames(fs{1}(1).name);
+Info0 = imfinfo(fs{1}(1).name);
+Ly = Info0(1).Height;
+Lx = Info0(1).Width;
+ops.Lx = Lx;
+ops.Ly = Ly;
 
-    % compute phase shifts from bidirectional scanning
-    if ops.dobidi
-        BiDiPhase = BiDiPhaseOffsets(IMG);
-    else
-        BiDiPhase = 0;
-    end
-    fprintf('bi-directional scanning offset = %d pixels\n', BiDiPhase);
-   
-    if abs(BiDiPhase) > 0
-        yrange = 2:2:Ly;
-        if BiDiPhase>0
-            IMG(yrange,(1+BiDiPhase):Lx,:,:) = IMG(yrange, 1:(Lx-BiDiPhase),:,:);
-        else
-            IMG(yrange,1:Lx+BiDiPhase,:,:)   = IMG(yrange, 1-BiDiPhase:Lx,:,:);
+indx = 0;
+IMG = zeros(Ly, Lx, nplanes, ops.NimgFirstRegistration, 'single');
+
+%%
+if ~ischar(ops.splitBlocks)
+    yB = cumsum([0 ops.splitBlocks{1}]);
+    xB = cumsum([0 ops.splitBlocks{2}]);
+    
+    ib = 0;
+    for iy = 1:length(yB)-1
+        for ix = 1:length(xB)-1
+            ib = ib+1;
+            ops.yBL{ib} = (yB(iy)+1):yB(iy+1);
+            ops.xBL{ib} = (xB(ix)+1):xB(ix+1);
+            
         end
     end
-    for i = 1:numPlanes
-        ops1{i} = blockAlignIterative(squeeze(IMG(:,:,ops.planesToProcess(i),:)), ops);
+end
+numBlocks = ib;
+
+% numBlocks = numel(ops.yBL);
+xyMask = zeros(Ly, Lx, numBlocks, 'single');
+for i = 1:numBlocks
+    msk = zeros(Ly, Lx, 'single');
+    msk(ops.yBL{i},ops.xBL{i}) = 1;
+    sT = ops.splitTaper;
+    msk = my_conv(my_conv(msk, sT)',sT)'; 
+    xyMask(:,:,i) = msk;
+end
+xyMask = xyMask./repmat(sum(xyMask, 3), 1, 1, numBlocks);
+xyMask = reshape(xyMask, Ly*Lx, numBlocks);
+
+%%
+if ops.doRegistration
+    for k = 1:length(ops.SubDirs)
+        iplane0 = 1;
+        for j = 1:length(fs{k})
+            if abs(nbytes - fs{k}(j).bytes)>1e3
+                nbytes = fs{k}(j).bytes;
+                nFr = nFrames(fs{k}(j).name);
+            end
+            if nFr<(nchannels*nplanes*nfmax + nchannels*nplanes)
+                continue;
+            end
+            
+            iplane0 = mod(iplane0-1, nplanes) + 1;
+            if red_align
+                ichanset = [nchannels*nplanes + nchannels*(iplane0-1) + [rchannel;...
+                    nchannels*nplanes*nfmax]; nchannels];
+            else
+                ichanset = [nchannels*nplanes + nchannels*(iplane0-1) + [ichannel;...
+                    nchannels*nplanes*nfmax]; nchannels];
+            end
+            iplane0 = iplane0 - nFr/nchannels;
+            data = loadFramesBuff(fs{k}(j).name, ichanset(1),ichanset(2), ichanset(3));
+            data = reshape(data, Ly, Lx, nplanes, []);
+   
+            IMG(:,:,:,indx+(1:size(data,4))) = data;
+            indx = indx + size(data,4);
+            
+        end
     end
-   if ops.showTargetRegistration
-       PlotRegMean(ops1,ops);
-   end
-else
-    [Ly, Lx] = size(IMG);
+    IMG =  IMG(:,:,:,1:indx);
+    %
     for i = 1:numPlanes
-        ops1{i} = ops;
-        ops1{i}.mimg = zeros(Ly, Lx);
-        ops1{i}.Ly   = Ly;
-        ops1{i}.Lx   = Lx;
+        ops1{i} = blockAlignIterative(squeeze(IMG(:,:,ops.planesToProcess(i),:)), ops, xyMask);
     end
 end
+
+if ops.showTargetRegistration
+    figure('position', [900 50 900 900])
+    ax = ceil(sqrt(numel(ops1)));
+    for i = 1:length(ops1)
+        subplot(ax,ax,i)
+        imagesc(ops1{i}.mimg)
+        colormap('gray')
+        title(sprintf('Registration for plane %d, mouse %s, date %s', ...
+            i, ops.mouse_name, ops.date))
+    end
+    
+    drawnow
+end
+%
 clear IMG
 
+% keyboard;
 
 %% prepare individual options files and open binaries
 for i = 1:numPlanes
@@ -85,37 +137,47 @@ for i = 1:numPlanes
     if ~exist(regdir, 'dir')
         mkdir(regdir);
     end    
+    
     % open bin file for writing
     fid{i}             = fopen(ops1{i}.RegFile, 'w');
     ops1{i}.DS          = [];
     ops1{i}.CorrFrame   = [];
     ops1{i}.mimg1       = zeros(Ly, Lx);
-    for ib = 1:numBlocks
-        ops1{i}.mimgB{ib} = ops1{i}.mimg(ops1{i}.yBL{ib}, ops1{i}.xBL{ib});
+    
+    if ~ischar(ops.splitBlocks)
+        for ib = 1:numBlocks
+            ops1{i}.mimgB{ib} = ops1{i}.mimg(ops1{i}.yBL{ib}, ops1{i}.xBL{ib});
+        end
     end
 end
+
 nbytes = fs{1}(1).bytes;
 nFr = nFramesTiff(fs{1}(1).name);
 
-%% compute registration offsets from mean img for each frame
+%%
 xyValid = true(Ly, Lx);
+
 tic
 for k = 1:length(fs)
     for i = 1:numPlanes
          ops1{i}.Nframes(k)  = 0;
     end
+    
     iplane0 = 1:1:ops.nplanes;
     for j = 1:length(fs{k})
         iplane0 = mod(iplane0-1, numPlanes) + 1;
+       
         nFr = nFramesTiff(fs{k}(j).name);
         if red_align
+            %                 ichanset = [nchannels*(iplane0-1)+rchannel; nFr; nchannels];
             ichanset = [rchannel; nFr; nchannels];
         else
             ichanset = [ichannel; nFr; nchannels];
         end
         data = loadFramesBuff(fs{k}(j).name, ichanset(1), ichanset(2), ichanset(3), ops.temp_tiff);
-
-        if abs(BiDiPhase) > 0
+        
+        
+        if BiDiPhase
             yrange = 2:2:Ly;
             if BiDiPhase>0
                 data(yrange, (1+BiDiPhase):Lx,:) = data(yrange, 1:(Lx-BiDiPhase),:);
@@ -126,8 +188,30 @@ for k = 1:length(fs)
         
         if ops.doRegistration
             % get the registration offsets
-            [dsall, ops1] = GetBlockOffsets(data, j, iplane0, ops, ops1);
+            dsall = zeros(size(data,3), 2, numBlocks);
+            for i = 1:numPlanes
+                ifr0 = iplane0(ops.planesToProcess(i));
+                indframes = ifr0:nplanes:size(data,3);
+                
+                ds = zeros(numel(indframes), 2, numBlocks,'double');
+                Corr = zeros(numel(indframes), numBlocks,'double');
+                for ib = 1:numBlocks
+                    % collect ds
+                    ops1{i}.mimg = ops1{i}.mimgB{ib};
                     
+                    [ds(:,:,ib), Corr(:,ib)]  = ...
+                        registration_offsets(data(ops1{i}.yBL{ib},ops1{i}.xBL{ib},...
+                        indframes), ops1{i}, 0);
+                end
+                if j==1
+                    ds(1,:,:) = 0;
+                end
+                dsall(indframes,:,:)  = ds;
+                
+                ops1{i}.DS          = cat(1, ops1{i}.DS, ds);
+                ops1{i}.CorrFrame   = cat(1, ops1{i}.CorrFrame, Corr);
+            end
+            
             % if aligning by the red channel, data needs to be reloaded as the
             % green channel
             if red_align
@@ -139,9 +223,20 @@ for k = 1:length(fs)
                 data = loadFramesBuff(ops.temp_tiff, ichanset(1), ichanset(2), ichanset(3));               
             end
             
-            % register frames
-            [dreg, xyValid] = BlockRegMovie(data, ops, dsall, xyValid);
-       
+            
+            ix0 = 0;
+            Nbatch = 1000;
+            dreg = zeros(size(data), 'like', data);
+            while ix0<size(data,3)
+                indxr = ix0 + (1:Nbatch);
+                indxr(indxr>size(data,3)) = [];
+                [dreg(:, :, indxr),  xyVal] = ...
+                    blockRegisterMovie(data(:, :, indxr), xyMask, dsall(indxr,:,:));
+                ix0 = ix0 + Nbatch;
+                
+                xyValid = xyValid & xyVal;
+            end
+           
         else
             dreg = data;
         end
@@ -167,7 +262,7 @@ for k = 1:length(fs)
     end    
 end
 
-%% write binary file to tiffs if ~isempty(ops.RegFileTiffLocation)
+%%
 for i = 1:numPlanes    
     fclose(fid{i});
     fid{i}           = fopen(ops1{i}.RegFile, 'r');
@@ -200,10 +295,6 @@ end
 % compute xrange, yrange
 for i = 1:numPlanes
     if ops.doRegistration
-%         badi                    = getOutliers(ops1{i}); 
-%         ops1{i}.badframes(badi) = true;
-        ops1{i}.badframes = false(sum(ops1{i}.Nframes), 1);
-        
         %         minDs = min(min(ops1{i}.DS(2:end, :,:), [], 3), [], 1);
         %         maxDs = max(max(ops1{i}.DS(2:end, :,:), [], 3), [], 1);
         ops1{i}.yrange  = find(xyValid(:, ceil(Lx/2)));
@@ -225,11 +316,14 @@ for i = 1:numPlanes
         mimg(ops1{i}.yBL{ib}, ops1{i}.xBL{ib}) = ops1{i}.mimgB{ib};
     end
     ops1{i}.mimg = mimg;
+    ops = ops1{i};
     
+    save(sprintf('%s/regops_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
+        ops.mouse_name, ops.date,  ops.planesToProcess(i)),  'ops')
 end
 
-save(sprintf('%s/regops_%s_%s.mat', ops.ResultsSavePath, ...
-        ops.mouse_name, ops.date),  'ops1')
 
 %save(sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
  %   ops.mouse_name, ops.date, iplane), 'ops')
+
+%%

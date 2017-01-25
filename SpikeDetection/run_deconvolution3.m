@@ -1,12 +1,21 @@
-function stat = run_deconvolution3(ops, dat)
+function [dcell, isroi] = run_deconvolution3(ops, dat)
 % outputs a cell array of deconvolved spike times and amplitudes.
 % Optionally output this in matrix form Ffr (very sparse).
 
 % load the initialization of the kernel    
-% load(fullfile(ops.toolbox_path, 'SpikeDetection\kernel.mat'));
+load(fullfile(ops.toolbox_path, 'SpikeDetection\kernel.mat'));
 
-% copy existing information
-stat = dat.stat;
+if isfield(dat.stat, 'igood')
+   isroi = logical([dat.stat.igood]); 
+else
+    if isfield(dat, 'cl') && isfield(dat.cl, 'iscell')
+        isroi = dat.cl.iscell;
+    else
+        isroi = [dat.stat.mrs]./[dat.stat.mrs0]<dat.clustrules.Compact & ...
+            [dat.stat.npix]>dat.clustrules.MinNpix & [dat.stat.npix]<dat.clustrules.MaxNpix;
+    end
+    isroi = logical(isroi);
+end
 
 if 0 % consider only the first 10 cells
     isroi = dat.cl.iscell;
@@ -18,11 +27,25 @@ end
 % construct Ff and Fneu
 Ff = [];
 Fneu = [];
-for j = 1:numel(dat.Fcell)
-    Ff   = cat(1, Ff, dat.Fcell{j}');
-    Fneu = cat(1,Fneu, dat.FcellNeu{j}');
+if isfield(dat, 'F')
+    for j = 1:numel(dat.F.Fcell)
+        Ff   = cat(1, Ff, dat.F.Fcell{j}(isroi, :)');
+        Fneu = cat(1,Fneu, dat.F.FcellNeu{j}(isroi, :)');
+    end
+    flag = mean(sign(dat.F.FcellNeu{1}(:)))<0;
+else
+    for j = 1:numel(dat.Fcell)
+        Ff   = cat(1, Ff, dat.Fcell{j}(isroi, :)');
+        Fneu = cat(1,Fneu, dat.FcellNeu{j}(isroi, :)');
+    end
+    flag = mean(sign(dat.FcellNeu{1}(:)))<0;
 end
 
+if flag
+    % then it means this was processed with old "model" option
+    Fneu = -Fneu;
+    Ff   = Ff + Fneu;
+end
 
 % added by SK (11/02/16) to compensate the fluorescence decay over session
 % based on Acquisition2P
@@ -39,37 +62,47 @@ end
 % the basis functions should depend on timescale of sensor and imaging rate
 mtau             = ops.imageRate * ops.sensorTau/ops.nplanes; 
 
-coefDefault = .9; % initialize neuropil subtraction coef with 0.8
+coefNeu = .9; % initialize neuropil subtraction coef with 0.8
+sd0   = std(Ff-coefNeu*Fneu - my_conv2(Ff-coefNeu*Fneu, 2, 1), [], 1);
+Ff   = 2 * Ff ./ repmat(1e-5 + sd0, size(Ff,1), 1);
+Fneu = 2 * Fneu ./ repmat(1e-5 + sd0, size(Ff,1), 1);
 
-Params = [1 1 .5 2e4]; %type of deconvolution, Th, Thi(nner loop), max Nspikes
+Params = [1 3 3 2e4]; %type of deconvolution, Th, Thi(nner loop), max Nspikes
 
-% f0 = (mtau/2); % resample the initialization of the kernel to the right number of samples
-kernel = exp(-[1:ceil(5*mtau)]'/mtau);
+f0 = (mtau/2); % resample the initialization of the kernel to the right number of samples
+kernel = interp1(1:numel(kernel), kernel, ...
+    linspace(1, numel(kernel), ceil(f0/3 * numel(kernel))));
+kernel = normc(kernel');
 %
 npad = 250;
 [NT, NN] = size(Ff);
 
-ops.fs            = getOr(ops, 'fs', ops.imageRate/ops.nplanes);
-[coefNeu, inomax] = my_ica(Ff, Fneu, ops.fs, coefDefault);
-
-Ff = Ff - bsxfun(@times, Fneu, coefNeu(:)');
-
-% determine and subtract the running baseline
-[F1, ~, sn] = estimate_baseline(Ff, ops);
-
-if ops.recomputeKernel
-    [kernel, mtau] = get1Dkernel(F1, ops.fs);
-
-%     [kernel, mtau]  = estimateKernel(ops, Ff, tlag);
-        
-    fprintf('Timescale determined is %4.4f samples \n', mtau);
-end
-kernel = normc(kernel(:));
 %%
-kernelS   = repmat(kernel, 1, NN);
+B = zeros(3, NN);
+nt0 = numel(kernel);
+
+taus = mtau * [1/8 1/4 1/2 1 2];
+Nbasis = numel(taus);
+kerns = zeros(nt0, Nbasis);
+for i = 1:Nbasis
+    kerns(:,i) = exp(-[0:nt0-1]/taus(i)) - exp(-[0:nt0-1]/(taus(i)/2));
+end
+kerns = normc(kerns);
+%
+
+kernelS = repmat(max(0, kernel), 1, NN);
+
+maxNeurop = ops.maxNeurop;
+
+err = zeros(NN, 1);
+
+FfA = zeros(Nbasis, NN);
+AtA = zeros(Nbasis, Nbasis,NN);
+F1 = zeros(size(Ff), 'single');
+B2 = zeros(Nbasis, NN);
+
 dcell = cell(NN,1);
 
-<<<<<<< HEAD
 tic
 for iter = 1:10
     plot(kernelS)
@@ -128,25 +161,15 @@ for iter = 1:10
     
     mean(err(:))
    
-=======
-% run the deconvolution to get fs etc\
-parfor icell = 1:size(Ff,2)
-    [F1(:,icell),dcell{icell}] = ...
-        single_step_single_cell(F1(:,icell), Params, kernelS(:,icell), NT, npad,dcell{icell});
->>>>>>> refs/remotes/cortex-lab/master
 end
-
-fprintf('Percent bins with spikes %2.4f \n', 100*mean(F1(:)>0))
+%
+fprintf('finished... \n')
 
 % rescale baseline contribution
 for icell = 1:size(Ff,2)
-    stat(icell).c                      = dcell{icell}.c;     % spike amplitudes
-    stat(icell).st                     = dcell{icell}.st; % spike times    
-    stat(icell).neuropilCoefficient    = coefNeu(icell); 
-    stat(icell).noiseLevel             = sn(icell);     % noise level
-    stat(icell).kernel                 = dcell{icell}.kernel;     % noise level
+    dcell{icell}.B = B(:,icell);
+    dcell{icell}.B(2) = dcell{icell}.B(2) * sd(icell);
 end
-
 
 %%
 
