@@ -536,7 +536,6 @@ end
 guidata(hObject,h);
 redraw_figure(h);
 
-
 function set_Bcolor(h, ih)
 pb = [87 103 89 90 92];
  
