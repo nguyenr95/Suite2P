@@ -52,8 +52,7 @@ try
     if isfield(h, 'dat') && isfield(h.dat, 'filename')
         root = fileparts(h.dat.filename);
     else
-        % root = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\';
-        root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
+        root = 'D:\DATA\F\';
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
     set(h.figure1, 'Name', filename1);
@@ -120,26 +119,16 @@ else
     h.dat.F.ichosen = 1;
     
     % loop through redcells and set h.dat.cl.rands(h.dat.F.ichosen) = 0
-    if ~isempty(find(h.dat.cl.redcell,1))
-        for j = find(h.dat.cl.redcell)
-            h.dat.F.ichosen = j;
-            h.dat.cl.rands(h.dat.F.ichosen) = 0;
-            % h.dat.cl.rands(j) = 0;
-        end
+    for j = find([h.dat.stat.redcell])
+        h.dat.cl.rands(j) = 0;
     end
-%     if ~isempty(icell)
-%         h.dat.F.ichosen = icell(1); %ceil(rand * numel(icell))
-%     else
-%         h.dat.F.ichosen = 1; %ceil(rand * numel(icell))
-%     end
-    h = buildHue(h);
-    h = buildLambdaValue(h);
-    
+   
     % x and y limits on subquadrants
     h.dat.figure.x0all = round(linspace(0, 19/20*h.dat.cl.Lx, 4));
     h.dat.figure.y0all = round(linspace(0, 19/20*h.dat.cl.Ly, 4));
     h.dat.figure.x1all = round(linspace(1/20 * h.dat.cl.Lx, h.dat.cl.Lx, 4));
     h.dat.figure.y1all = round(linspace(1/20 * h.dat.cl.Ly, h.dat.cl.Ly, 4));
+    
 end
 
 % activate all pushbuttons
@@ -157,7 +146,7 @@ set(h.edit50,'String', num2str(h.dat.cl.threshold));
 set_Bcolor(h, 1);
 set_maskCcolor(h, 1);
 % select unit normalized ROI brightness
-h.dat.cl.vmap = 'var';
+h.dat.cl.vmap = 'unit';
 set_maskBcolor(h, 1);
 set(h.full, 'BackgroundColor', [1 0 0])
 
@@ -188,20 +177,6 @@ end
 
 h.dat.procmap = 0;
 h.dat.map = 1;
-h.dat.F.trace = [];
-for i = 1:length(h.dat.Fcell)
-    h.dat.F.trace = cat(2, h.dat.F.trace, h.dat.Fcell{i});
-end
-if isfield(h.dat.F, 'FcellNeu')
-    h.dat.F.neurop = [];
-    for i = 1:length(h.dat.FcellNeu)
-        h.dat.F.neurop = cat(2, h.dat.F.neurop, h.dat.FcellNeu{i});
-    end    
-    
-else
-   h.dat.F.neurop = zeros(size(h.dat.F.trace), 'single');
-end
-h.dat.plot_neu = 0;
 
 redraw_fluorescence(h);
 redraw_figure(h);
@@ -232,28 +207,23 @@ function pushbutton1_Callback(hObject, eventdata, h)
 % unit vector mask
 h.dat.cl.vmap = 'var';
 set_maskBcolor(h, 2)
+
 redraw_figure(h);
 guidata(hObject,h);
 
 function pushbutton84_Callback(hObject, eventdata, h)
 % save proc file and rules file
-h.dat = rmfield(h.dat,'F');
+h.dat.F.trace = [];
 dat = h.dat;
-isgood = dat.cl.iscell;
-
-if isempty(strfind(h.dat.filename,'_proc'))
-    save([h.dat.filename(1:end-4) '_proc_isgood.mat'],'isgood')
-    save([h.dat.filename(1:end-4) '_proc.mat'],'-struct','dat')
-else
-    save([h.dat.filename(1:end-4) '_isgood.mat'],'isgood')
-    save(h.dat.filename,'-struct','dat')
-end
-
+save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
+%
 h.st0(:,1) = double([h.dat.stat.iscell]);
+%
 statLabels  = h.statLabels;
 prior       = h.prior;
 st          = cat(1, h.st, h.st0);
 save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+
 
 function figure1_ResizeFcn(hObject, eventdata, h)
 
@@ -454,7 +424,7 @@ else
     set(h.pushbutton86, 'BackgroundColor', .94 * [1 1 1]); 
 end
 guidata(hObject,h);
-redraw_figure(h);
+
 
 function set_Bcolor(h, ih)
 pb = [87 103 89 90 92];
@@ -736,18 +706,3 @@ msg{1} = ['Zoom in on portion of the image. Quadrants have 10% overlap.'];
 msg{3} = ['Buttons become dark grey after visiting a quadrant.'];
 
 msgbox(msg, 'ZOOM panel instructions');
-
-% --- Executes on button press in pushbutton94.
-% function pushbutton94_Callback(hObject, eventdata, h)
-% % hObject    handle to pushbutton94 (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% isgood = h.dat.cl.iscell;
-% 
-% if isempty(strfind(h.dat.filename,'_proc'))
-%     save([h.dat.filename(1:end-4) '_proc_isgood.mat'],'isgood')
-% else
-%     save([h.dat.filename(1:end-4) '_isgood.mat'],'isgood');
-% end
-% 
-% disp('isgood saved.')
