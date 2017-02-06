@@ -1,11 +1,7 @@
 function ops = build_ops3(db, ops)
 
-% ops = db;
-ops = addfields(ops, db);
-
-for k = 1:length(db.expts)
-    ops.SubDirs{k}    = num2str(db.expts(k));
-end
+ops.nplanes = getOr(ops, 'nplanes', 1);
+ops.nchannels = getOr(ops, 'nchannels', 1);
 
 if ops.doRegistration
     ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date);
@@ -69,6 +65,17 @@ try
     str = hh(strfind(hh, 'scanZoomFactor = '):end);
     ind = strfind(str, 'scanimage');
     ops.zoomMicro = str2double(str(18 : ind(1)-1));
+    
+    % get number of channels of red experiment
+    if isfield(db, 'expred') && ~isempty(db.expred) && ...
+            (~isfield(db, 'nchannels_red') || isempty(db.nchannels_red))
+        [~, header] = loadFramesBuff(ops.fsred(1).name, 1, 1, 1);
+        hh=header{1};
+        str = hh(strfind(hh, 'channelsSave = '):end);
+        ind = strfind(str, 'scanimage');
+        ch = str2num(str(16 : ind(1)-1));
+        ops.nchannels_red = length(ch);
+    end
 catch
 end
 
@@ -77,7 +84,7 @@ if ~(isfield(ops, 'planesToProcess') && ~isempty(ops.planesToProcess))
     ops.planesToProcess = 1:stackNumSlices; % changed by SK 16/12/14
 else
     % planesToProcess is not working right now
-    ops.planesToProcess = 1:ops.nplanes; 
+    ops.planesToProcess = 1:ops.nplanes;
 end
 
 CharSubDirs = '';
@@ -85,6 +92,8 @@ for i = 1:length(ops.SubDirs)
     CharSubDirs = [CharSubDirs ops.SubDirs{i} '_'];
 end
 CharSubDirs = CharSubDirs(1:end-1);
+ops.CharSubDirs = CharSubDirs;
 
 ops.ResultsSavePath = sprintf('%s\\%s\\%s\\%s\\', ops.ResultsSavePath, ops.mouse_name, ops.date);
 % ops.ResultsSavePath = sprintf('%s\\%s\\%s\\%s\\', ops.ResultsSavePath, ops.mouse_name, ops.date, CharSubDirs);
+

@@ -1,8 +1,6 @@
-function add_deconvolution(ops, db, clustrules)
+function add_deconvolution(ops, db)
 ops = build_ops3(db, ops);
 ops0 = ops;
-
-clustrules = get_clustrules(clustrules);
 
 try
     ppool = gcp ;
@@ -12,34 +10,27 @@ end
 % warning('ops0.imageRate now represents the TOTAL frame rate of the recording over all planes. This warning will be disabled in a future version. ')
 
 for i = 1:length(ops.planesToProcess)
-    iplane  = ops.planesToProcess(i);
     
+    iplane  = ops.planesToProcess(i);    
     fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d.mat', ops.ResultsSavePath, ...
         ops.mouse_name, ops.date, iplane, ops.Nk);
+    % fpath = sprintf('%s/F_%s_%s_plane%d_proc.mat', ops.ResultsSavePath, ...
+    %     ops.mouse_name, ops.date, iplane);
     dat = load(fpath);
-    
-    % fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d_proc.mat', ops.ResultsSavePath, ...
-    %     ops.mouse_name, ops.date, iplane, ops.Nk);
-    
-%     if exist(fpath, 'file')
-%         load(fpath);
-%     else
-%         fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d.mat', ops.ResultsSavePath, ...
-%             ops.mouse_name, ops.date, iplane, ops.Nk);
-%         dat = load(fpath);
-%     end
-    
-    if isfield(dat, 'dat')
-        dat = dat.dat; % just in case trying to load processed files
+    if exist(fpath, 'file')
+        load(fpath);
+    else
+        fpath = sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
+            ops.mouse_name, ops.date, iplane);
+        dat = load(fpath);
     end
     
+    if isfield(dat, 'dat')
+        dat = dat.dat; % just in case...
+    end
     
     % overwrite fields of ops with those saved to file
     ops = addfields(ops, dat.ops);
-%     ops.maxNeurop = 1;
-    if ~isfield(dat, 'clustrules');
-        dat.clustrules = clustrules;
-    end
     
     % set up options for deconvolution
     ops.imageRate    = getOr(ops0, {'imageRate'}, 30); % total image rate (over all planes)
@@ -57,11 +48,11 @@ for i = 1:length(ops.planesToProcess)
     
     
     fprintf('Spike deconvolution, plane %d... \n', iplane)
-    % split data into batches
-    [dcell, isroi] = run_deconvolution3(ops, dat);
     
-    dat.cl.isroi = isroi;
-    dat.cl.dcell = dcell;
+    % split data into batches
+    stat = run_deconvolution3(ops, dat);
+    
+    dat.stat = stat;
     
     fpath = sprintf('%s\\F_%s_%s_plane%d_Nk%d_proc.mat', ops.ResultsSavePath, ...
         ops.mouse_name, ops.date, iplane, ops.Nk);
