@@ -3,6 +3,12 @@ function ops = build_ops3(db, ops)
 ops.nplanes = getOr(ops, 'nplanes', 1);
 ops.nchannels = getOr(ops, 'nchannels', 1);
 
+ops = addfields(ops, db);
+
+for k = 1:length(db.expts)
+    ops.SubDirs{k}    = num2str(db.expts(k));
+end
+
 if ops.doRegistration
     ops.RootDir = fullfile(ops.RootStorage, ops.mouse_name, ops.date);
 else

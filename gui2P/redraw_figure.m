@@ -42,6 +42,11 @@ for j = 1:numel(stat)
     ipix    = stat(j).ipix;
     lambda   = stat(j).lambda;
     
+    % lambda should be a column vector SK17/02/06
+    if isrow(lambda)
+        lambda = lambda';
+    end
+    
     if ichosen==j
         inew = true(numel(ipix), 1);
     else

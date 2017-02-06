@@ -1,4 +1,4 @@
-function  run_pipeline(db, ops0)
+function  run_pipeline(db, ops0, clustrules)
 
 % ops0.TileFactor (or db(iexp).TileFactor) can be set to multiply the number of default tiles for the neuropil
 
@@ -31,6 +31,7 @@ ops.clustrules.diameter             = ops.diameter;
 ops.clustrules                      = get_clustrules(ops.clustrules);
 %%
 % this loads ops1 and checks if processed binary files exist
+ops1 = [];
 opath = sprintf('%s/regops_%s_%s.mat', ops.ResultsSavePath, ops.mouse_name, ops.date);
 processed = 1;
 if exist(opath, 'file')
@@ -120,7 +121,6 @@ for i = 1:length(ops.planesToProcess)
             'Fcell', 'FcellNeu', '-v7.3')
     end
 
-    
     if ops.DeleteBin
         fclose('all');
         delete(ops.RegFile);        % delete temporary bin file
@@ -128,4 +128,4 @@ for i = 1:length(ops.planesToProcess)
 end
 
 % clean up
-fclose all
+fclose all;

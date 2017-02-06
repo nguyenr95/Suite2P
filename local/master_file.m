@@ -69,13 +69,15 @@ ops0.sig                    = 0;  % spatial smoothing constant
 ops1 = ops0;
 
 % parameters for signal and neuropil calculation
-ops1.inNeurop   = 3; % inner diameter of neuropil mask
-ops1.outNeurop  = 30; % outer diameter of neuropil mask
-ops1.microID    = 'Loki'; % ID of microscope (b: B-scope, b2: Bergamo2, m: MOM)
-ops1.useSVD     = 0; % uses all SVD components to calculate signal and neuropil instead of bin-file
-ops1.getSignal  = 1; % to extract neural signal
-ops1.getNeuropil= 1; % to extract neuropil
-ops1.newFile    = 1; % to create new file ending _new.mat, otherwise
+if 0
+    ops1.inNeurop   = 3; % inner diameter of neuropil mask
+    ops1.outNeurop  = 30; % outer diameter of neuropil mask
+    ops1.microID    = 'Loki'; % ID of microscope (b: B-scope, b2: Bergamo2, m: MOM)
+    ops1.useSVD     = 0; % uses all SVD components to calculate signal and neuropil instead of bin-file
+    ops1.getSignal  = 1; % to extract neural signal
+    ops1.getNeuropil= 1; % to extract neuropil
+    ops1.newFile    = 1; % to create new file ending _new.mat, otherwise
+end
 % NOTE: to save time, first run detected ROIs through the gui to select
 % "good ROIs", then extract signals and neuropil only on those ROIs;
 % to do so, set .getSignal=0 and .getNeuropil=0 in the master_file, then
@@ -88,7 +90,7 @@ ops1.newFile    = 1; % to create new file ending _new.mat, otherwise
 
 
 %%
-for iexp = length(db)-2:length(db)-2
+for iexp = 1:length(db)
     for iplane = 1:db(iexp).nplanes
         data_file = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date,sprintf('F_%s_%s_plane%d_Nk%d.mat', db(iexp).mouse_name, db(iexp).date, iplane, ops0.Nk));
         if ~exist(data_file,'file')
@@ -99,7 +101,7 @@ for iexp = length(db)-2:length(db)-2
             run_pipeline(db(iexp), ops0, clustrules);
             
             % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
-            add_deconvolution(ops1, db(iexp), clustrules);
+            % add_deconvolution(ops1, db(iexp), clustrules);
         end
     end
 end

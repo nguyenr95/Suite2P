@@ -157,7 +157,7 @@ set(h.edit50,'String', num2str(h.dat.cl.threshold));
 set_Bcolor(h, 1);
 set_maskCcolor(h, 1);
 % select unit normalized ROI brightness
-h.dat.cl.vmap = 'unit';
+h.dat.cl.vmap = 'var';
 set_maskBcolor(h, 1);
 set(h.full, 'BackgroundColor', [1 0 0])
 
