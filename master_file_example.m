@@ -86,3 +86,5 @@ end
 % dat.cl.dcell{i}.st are the deconvolved spike times (in frames)
 % dat.cl.dcell{i}.c  are the deconvolved amplitudes
 % dat.cl.dcell{i}.kernel is the estimated kernel
+
+%% Test line added here
