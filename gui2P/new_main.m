@@ -52,7 +52,7 @@ try
     if isfield(h, 'dat') && isfield(h.dat, 'filename')
         root = fileparts(h.dat.filename);
     else
-        root = 'D:\DATA\F\';
+        root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
     set(h.figure1, 'Name', filename1);

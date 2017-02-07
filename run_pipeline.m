@@ -8,7 +8,8 @@ ops0.LoadRegMean                    = getOr(ops0, {'LoadRegMean'}, 0);
 ops0.NiterPrealign                  = getOr(ops0, {'NiterPrealign'}, 10);
 ops0.registrationUpsample           = getOr(ops0, {'registrationUpsample'}, 1);  % upsampling factor during registration, 1 for no upsampling is much faster, 2 may give better subpixel accuracy
 ops0.getROIs                        = getOr(ops0, {'getROIs'}, 1);   % whether to run the optimization
-ops0.getSVDcomps                    = getOr(ops0, {'getSVDcomps'}, 0);   % whether to save SVD components to disk for later processing
+ops0.getSVDcomps                    = getOr(ops0, {'getSVDcomps'}, 1);   % whether to save SVD components to disk for later processing
+ops0.writeSVDroi                    = getOr(ops0, {'writeSVDroi'}, 1);   % whether to save SVDroi components to disk for later processing
 ops0.nSVD                           = getOr(ops0, {'nSVD'}, 1000);   % how many SVD components to save to disk
 if isfield(ops0, 'numBlocks') && ~isempty(ops0.numBlocks) && ops0.numBlocks> 1
     ops0.nonrigid                   = 1;
@@ -72,6 +73,7 @@ for i = 1:length(ops.planesToProcess)
         load(regops_filename);
     end
     ops.iplane  = iplane;
+    ops.writeSVDroi = 1; % save SVDroi
     
     if all(isfield(ops,{'xrange','yrange'}))
         if numel(ops.yrange)<10 || numel(ops.xrange)<10
@@ -79,8 +81,9 @@ for i = 1:length(ops.planesToProcess)
             continue;
         end
     end
-
-    if getOr(ops, {'getSVDcomps'}, 0)
+    
+    SVD_file_name = sprintf('%sSVD_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, iplane);
+    if getOr(ops, {'getSVDcomps'}, 0) && ~exist(SVD_file_name,'file')
         fprintf('Computing SVD ...')
         tstart = tic;
         % extract and write to disk SVD comps (raw data)
@@ -89,28 +92,20 @@ for i = 1:length(ops.planesToProcess)
         fprintf('done in %.1f sec',telapsed)
     end
     
-    if ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)
+    SVDroi_file_name = sprintf('%sSVDroi_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, ops.iplane);
+    if (ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)) && ~exist(SVDroi_file_name,'file')
         fprintf('Computing SVDroi ...')
         tstart = tic;
         % extract and/or write to disk SVD comps (normalized data)
         [ops, U, model]    = get_svdForROI(ops);
         telapsed = toc(tstart);
         fprintf('done in %.1f sec',telapsed)
+    else
+        load(SVDroi_file_name)
+        model.sdmov = ops.sdmov;
     end
 
     if ops.getROIs
-
-% SK: legacy code
-%         switch clustModel
-%             case 'standard'
-%                 [ops, stat, res]  = fast_clustering(ops,U, Sv);
-%             case 'neuropil'                    
-%                   % [ops, stat, res]  = fast_clustering_with_neuropil(ops,U, Sv);
-%                   % better model of the neuropil
-%                   [ops, stat, res]  = fastClustNeuropilCoef(ops,U, Sv);
-%         end
-% 
-%         [stat2, res2] = apply_ROIrules(ops, stat, res, clustrules);
         
         % get sources in stat, and clustering images in res
         [ops, stat, model]           = sourcery(ops,U, model);
@@ -124,6 +119,19 @@ for i = 1:length(ops.planesToProcess)
         save(sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
             ops.mouse_name, ops.date, ops.iplane),  'ops',  'stat',...
             'Fcell', 'FcellNeu', '-v7.3')
+        
+        % SK: legacy code
+        %     switch clustModel
+        %         case 'standard'
+        %             [ops, stat, res]  = fast_clustering(ops,U, Sv);
+        %         case 'neuropil'                    
+        %               % [ops, stat, res]  = fast_clustering_with_neuropil(ops,U, Sv);
+        %               % better model of the neuropil
+        %               [ops, stat, res]  = fastClustNeuropilCoef(ops,U, Sv);
+        %     end
+        % 
+        %     [stat2, res2] = apply_ROIrules(ops, stat, res, clustrules);
+        
     end
 
     if ops.DeleteBin
