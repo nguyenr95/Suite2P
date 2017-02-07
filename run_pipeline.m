@@ -28,7 +28,7 @@ ops.clustrules                      = get_clustrules(ops.clustrules);
 %%
 % this loads ops1 and checks if processed binary files exist
 ops1 = [];
-opath = sprintf('%s/regops_%s_%s.mat', ops.ResultsSavePath, ops.mouse_name, ops.date);
+opath = sprintf('%sregops_%s_%s.mat', ops.ResultsSavePath, ops.mouse_name, ops.date);
 processed = 1;
 if exist(opath, 'file')
     load(opath);
@@ -45,8 +45,8 @@ clustModel     = getOr(ops, {'clustModel'}, 'standard');
 neuropilSub    = getOr(ops, {'neuropilSub'}, 'surround');
 splitBlocks    = getOr(ops, {'splitBlocks'}, 'none');
 %
-i = 1;
-regops_filename = sprintf('%s/regops_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, i);
+%i = 1;
+%regops_filename = sprintf('%s/regops_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, i);
 
 % do registration if the processed binaries do not exist
 if processed==0
@@ -55,10 +55,10 @@ if processed==0
     else
         ops1 = reg2P(ops);  % do registration
     end
-    save ops1_new.mat ops1
+    % save ops1_new.mat ops1
 else
     disp('already registered binary found');
-    load ops1_new
+    % load ops1_new
 end
 
 %%
@@ -81,13 +81,21 @@ for i = 1:length(ops.planesToProcess)
     end
 
     if getOr(ops, {'getSVDcomps'}, 0)
+        fprintf('Computing SVD ...')
+        tstart = tic;
         % extract and write to disk SVD comps (raw data)
         ops    = get_svdcomps(ops);
+        telapsed = toc(tstart);
+        fprintf('done in %.1f sec',telapsed)
     end
     
     if ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)
+        fprintf('Computing SVDroi ...')
+        tstart = tic;
         % extract and/or write to disk SVD comps (normalized data)
         [ops, U, model]    = get_svdForROI(ops);
+        telapsed = toc(tstart);
+        fprintf('done in %.1f sec',telapsed)
     end
 
     if ops.getROIs

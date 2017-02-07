@@ -243,7 +243,7 @@ for i = 1:numel(ops1)
     end   
 end
 
-save(sprintf('%s/regops_%s_%s.mat', ops.ResultsSavePath, ...
+save(sprintf('%sregops_%s_%s.mat', ops.ResultsSavePath, ...
     ops.mouse_name, ops.date),  'ops1')
 
 

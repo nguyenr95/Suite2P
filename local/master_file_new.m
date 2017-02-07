@@ -64,11 +64,19 @@ ops0.redmax                 = 1; % the higher the max the more NON-red cells
 %% RUN THE PIPELINE HERE
 db0 = db;
 
-for iexp = 1 %[3:length(db) 1:2]
-    run_pipeline(db(iexp), ops0);
-    
-    % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
-    % add_deconvolution(ops0, db0(iexp));
+for iexp = 1:length(db) %[3:length(db) 1:2]
+    for iplane = 1:db(iexp).nplanes
+        data_file = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date,sprintf('F_%s_%s_plane%d.mat', db(iexp).mouse_name, db(iexp).date, iplane));
+        if 1%~exist(data_file,'file')
+            
+            disp(db(iexp).comments);
+            
+            run_pipeline(db(iexp), ops0);
+
+            % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
+            % add_deconvolution(ops0, db0(iexp));
+        end
+    end
 end
 
 %% STRUCTURE OF RESULTS FILE
