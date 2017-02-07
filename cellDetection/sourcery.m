@@ -177,7 +177,24 @@ while 1
     Vnew = sq(sum(Ucell.^2,1));
     
     fprintf('%d total ROIs, err %4.4f, thresh %4.4f \n', icell, err(iter), Th)
+    
+    % draw figure for each iteration. SK 17/02/07
+    figure(1)
+    subplot(1,2,1)
+    imagesc(V, [Th 2*Th])
+    axis off
+    
+    subplot(1,2,2)
+    imagesc(Vnew)
+    axis off
+    
+    figure(2)
+    [~, ~, ~] = drawClusters(ops, r, mPix, mLam, Ly, Lx);
+    
+    drawnow
+    
 end
+
 if ops.fig
     figure
     subplot(1,2, 1);
@@ -207,8 +224,9 @@ stat = getFootprint(ops, codes, Ucell, mPix, mLam, mLam0);
 % compute compactness of ROIs
 stat = anatomize(ops, mPix, mLam, stat);
 
-figure
+figure(3)
 [~, iclust, lam] = drawClusters(ops, r, mPix, mLam, Ly, Lx);
+title('final')
 
 model.L     = L;
 model.S     = S;

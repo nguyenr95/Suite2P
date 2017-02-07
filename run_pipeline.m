@@ -1,4 +1,4 @@
-function  run_pipeline(db, ops0, clustrules)
+function  run_pipeline(db, ops0)
 
 % ops0.TileFactor (or db(iexp).TileFactor) can be set to multiply the number of default tiles for the neuropil
 
@@ -16,11 +16,7 @@ end
 ops0.nonrigid                       = getOr(ops0, 'nonrigid', 0);   
 ops0.kriging                        = getOr(ops0, 'kriging', 1);  
 
-clustrules = get_clustrules(clustrules);
-
-ops0.diameter                       = clustrules.diameter;
-
-ops = build_ops3(db, ops0);
+ops                                 = build_ops3(db, ops0);
 
 if ~isfield(ops, 'diameter') || isempty(ops.diameter)
     warning('you have not specified mean diameter of your ROIs')
@@ -59,11 +55,12 @@ if processed==0
     else
         ops1 = reg2P(ops);  % do registration
     end
+    save ops1_new.mat ops1
 else
     disp('already registered binary found');
+    load ops1_new
 end
 
-save ops1_new.m ops1
 %%
 for i = 1:length(ops.planesToProcess)
     iplane  = ops.planesToProcess(i);
