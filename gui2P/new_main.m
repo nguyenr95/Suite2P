@@ -70,8 +70,12 @@ rng('default')
 
 % keyboard;
 if isfield(h.dat, 'dat')
+    % proc file loaded
     h.dat = h.dat.dat;
+    h.dat.proc_flag = 1;
 else
+    h.dat.proc_flag = 0;
+    
     h.dat.filename = fullfile(filepath1, filename1);
     h.dat.cl.Ly       = numel(h.dat.ops.yrange);
     h.dat.cl.Lx       = numel(h.dat.ops.xrange);
@@ -92,6 +96,12 @@ else
     if isfield(h.dat.ops, 'clustrules')
        h.dat.clustrules = h.dat.ops.clustrules; 
     end
+    
+    if ~isfield(h.dat.stat,'manual') % SK 17/02/08
+        for j = 1:numel(h.dat.stat)
+            h.dat.stat(j).manual  = 0;
+        end
+    end    
     
     % set up classifier
     h.dat.cl.threshold  = 0.5;
@@ -216,13 +226,14 @@ function pushbutton84_Callback(hObject, eventdata, h)
 h.dat.F.trace = [];
 dat = h.dat;
 save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
-%
-h.st0(:,1) = double([h.dat.stat.iscell]);
-%
-statLabels  = h.statLabels;
-prior       = h.prior;
-st          = cat(1, h.st, h.st0);
-save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+if ~h.dat.proc_flag
+    % for non-proc files, save additional samples for the classifier
+    h.st0(:,1) = double([h.dat.stat.iscell]);
+    statLabels  = h.statLabels;
+    prior       = h.prior;
+    st          = cat(1, h.st, h.st0);
+    save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+end
 
 
 function figure1_ResizeFcn(hObject, eventdata, h)
@@ -355,6 +366,7 @@ switch eventdata.Key
         pushbutton104_Callback(hObject, eventdata, h);
 end
 
+% click on the selection window
 function figure1_WindowButtonDownFcn(hObject, eventdata, h)
 z = round(eventdata.Source.CurrentAxes.CurrentPoint(1,:));
 x = round(z(1));
@@ -365,11 +377,12 @@ if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
     ichosen = h.dat.F.ichosen;
     
     switch eventdata.Source.SelectionType
-        case 'alt'
+        case 'alt' % right click -- manual selection
             % flip currently selected unit
+            h.dat.stat(ichosen).manual = 0.5 - h.dat.stat(ichosen).iscell;  % SK 17/02/08
             h.dat.stat(ichosen).iscell = 1 - ...
                 h.dat.stat(ichosen).iscell;
-        case 'extend'
+        case 'extend' % left click
             h.dat.stat(ichosen).redcell = 1 -  h.dat.stat(ichosen).redcell;
             
             if h.dat.stat(ichosen).redcell ==1
@@ -385,6 +398,9 @@ if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
             else
                 display('not red')
             end
+        case 'open' % SK 17/02/08
+            % unpin the manual selection on this cell
+            h.dat.stat(ichosen).manual = 0;
     end
     
     redraw_fluorescence(h);
@@ -576,7 +592,11 @@ function edit50_Callback(hObject, eventdata, h)
 h.dat.cl.threshold = str2double(get(h.edit50,'String'));
 for j = 1:length(h.dat.stat)
     h.dat.stat(j).iscell = h.dat.stat(j).cellProb > h.dat.cl.threshold;
+    % overwrite manual selections -- SK 17/02/08
+    h.dat.stat(j).iscell(h.dat.stat(j).manual>1e-3) = 1;
+    h.dat.stat(j).iscell(h.dat.stat(j).manual<-1e-3) = 0;
 end
+
 redraw_figure(h);
 
 guidata(hObject,h);

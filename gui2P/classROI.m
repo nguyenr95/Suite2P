@@ -29,8 +29,11 @@ model       = buildHist(prior, st, statLabels);
 [Ypred, ps] = evaluateHist(model, st0);
 
 for j = 1:length(stat)
-   stat(j).iscell = Ypred(j) > h.dat.cl.threshold; 
-   stat(j).cellProb  = Ypred(j); 
+    stat(j).iscell = Ypred(j) > h.dat.cl.threshold; 
+    stat(j).cellProb  = Ypred(j);
+    % overwrite manual selections -- SK 17/02/08
+    stat(j).iscell(stat(j).manual>1e-3) = 1;
+    stat(j).iscell(stat(j).manual<-1e-3) = 0;
 end
 
 h.dat.stat      = stat;
