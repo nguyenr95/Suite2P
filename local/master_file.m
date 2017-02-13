@@ -4,7 +4,8 @@
 % cd('C:\Users\Shin\Documents\GitHub\Suite2P\local') % start this code in the directory with make_db
 
 % make_db_example;
-make_db;
+% make_db
+make_db4Alice;
 
 [toolbox_path,~,~] = fileparts(which('run_pipeline'));
 
