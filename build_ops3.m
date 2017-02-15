@@ -22,7 +22,7 @@ ops.fsroot = [];
 for j = 1:ops.nplanes %length(ops.SubDirs) % changed on 16/11/25 by SK
     ops.fsroot{j} = dir(fullfile(ops.RootDir,sprintf('*Slice%02d*.tif',j)));
     if j==1
-        ops.rawMovies = dir(fullfile(ops.RootDirRaw,'*tif'));
+        ops.rawMovies = dir(fullfile(ops.RootDirRaw,'*.tif'));
         for k = 1:length(ops.rawMovies)
             % Do not include overview image
             if isfinite(strfind(ops.rawMovies(k).name,'overview'));

@@ -42,13 +42,6 @@ ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyL
 ops0.ShowCellMap            = 1;
 ops0.DeleteBin              = 0; % set to 1 to delete bin file after processing
 
-% these are modifiable settings for classifying ROIs post-clustering
-clustrules.MaxNpix                          = 500; % important
-clustrules.MinNpix                          = 30; % important
-clustrules.Compact                          = 2; % important
-clustrules.parent.minPixRelVar              = 1/10;
-clustrules.parent.PixelFractionThreshold    = 0.5; % 1/20;
-clustrules.parent.MaxRegions                = 10;
 
 % the following settings shouldn't need to be adjusted
 ops0.NavgFramesSVD          = 5000; % how many (pooled) frames to do the SVD based on
@@ -91,7 +84,6 @@ for iexp = 1:length(db)
             disp(db(iexp).comments);
             
             % copy files from zserver
-            run_pipeline(db(iexp), ops0, clustrules);
             
             % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
             % add_deconvolution(ops1, db(iexp), clustrules);
