@@ -34,6 +34,8 @@ if 1% ~exist(regops_filename,'file')
         ops1         = reg2P(ops);  % do registration
     end
 end
+
+save ops1_new.m ops1
 %%
 for i = 1:length(ops.planesToProcess)
     iplane  = ops.planesToProcess(i);

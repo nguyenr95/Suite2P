@@ -1,4 +1,3 @@
-
 function redraw_figure(h)
 I = hsv2rgb(cat(3, h.dat.img1.H, h.dat.img1.Sat, h.dat.img1.V));
 I = min(I, 1);

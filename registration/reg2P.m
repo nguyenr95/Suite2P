@@ -217,10 +217,10 @@ for k = 1 %:length(fs) % changed on 16/11/25 by SK
             % write dreg to bin file+
         
             ifr0 = iplane0(ops.planesToProcess(i));
-            indframes = ifr0:size(data,3); % frames are already separated for each plane by Acq2P
+            % indframes = ifr0:size(data,3); % frames are already separated for each plane by Acq2P
             % indframes = ifr0:nplanes:size(data,3);
             for l = 1:size(xFOVs,2)
-                dwrite = dreg(yFOVs(:,l),xFOVs(:,l),indframes);
+                dwrite = dreg(yFOVs(:,l),xFOVs(:,l),:); % changed by SK 16/12/14
                 fwrite(fid{i,l}, dwrite, class(data));
                 
                 ops1{i,l}.Nframes(k) = ops1{i,l}.Nframes(k) + size(dwrite,3);

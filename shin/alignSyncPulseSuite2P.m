@@ -4,14 +4,16 @@ function alignSyncPulseSuite2P(varargin)
 
 varargin2V(varargin);
 % select planes to analyze
-sliceSet = [2,8];
+% sliceSet = [2,8];
 % sliceSet = [1,2,3,7,8,9];
 
 if ~exist('data_file','var')
-    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201\';
-    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
+    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161221\';
+    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201_LK\';
+    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
     load(fullfile(PathName,ops_file));
+    ops0 = ops;
     data_file = dir([PathName,'*_proc.mat']);
     % ops.isgood_filename = fullfile(PathName,[data_file.name(1:end-4),'_isgood.mat']);
     % data = matfile(fullfile(PathName,data_file));
@@ -20,9 +22,16 @@ end
 nSlices = ops.nplanes;
 if nSlices==1
     fastZDiscardFlybackFrames = 0;
+    sliceSet = 1;
 else
     fastZDiscardFlybackFrames = 1;
 end
+nSlices = nSlices - fastZDiscardFlybackFrames;
+
+if ~exist('acqName','var')
+    acqName = 'FOV1';
+end
+
 
 if ~exist('sliceNum','var')
     sliceNum = 1;
@@ -31,8 +40,6 @@ end
 if ~exist('channelNum','var')
     channelNum = 1;
 end
-
-roiGroups = [1:20];
 
 chunk_size = 1e6;
 
@@ -52,7 +59,7 @@ switch vr.computerID
         MatlabPulseMode = 'digital';
 end
 
-nFramesTotal = ops.Nframes; % default num of frames
+nFramesTotal = ops.Nframes * ops.nplanes; % default num of frames
 
 switch MatlabPulseMode
     case 'analog'
@@ -269,43 +276,6 @@ if length(SI_sig_rise) > nFramesTotal * (nSlices + fastZDiscardFlybackFrames)
     SI_sig_rise = SI_sig_rise(1:nFramesTotal);
 end
 
-%%%%%%%%%%% change the file path of bin files for dF extraction %%%%%%%%%%%
-if 1
-    tstart = tic;
-    dcell = [];
-    cell_slice = [];
-    for si = 1:nSlices
-        if ismember(si,sliceSet)
-            if nSlices==1
-                load(fullfile(PathName,data_file.name));
-            else
-                load(fullfile(PathName,data_file(si).name));
-            end
-            if exist('dat','var')
-                cl = dat.cl;
-            end
-            n_cell = length(cl.dcell);
-            % isgood = cl.iscell(651:end); % changing the name because iscell is MATLAB function
-            dcell = [dcell;cl.dcell];
-            cell_slice = [cell_slice;si*ones(n_cell,1)];
-
-        %     if n_cell ~= (length(cl.iscell)-650)
-        %         error('n_cell does not match the # of deconvolved cells!')
-        %     end
-
-            if 0
-                sp = zeros(n_cell,nFramesTotal);
-                for ci = 1:n_cell
-                    sp(ci,cl.dcell{ci}.st) = cl.dcell{ci}.c;
-                end
-            end
-            telapsed(si) = toc(tstart);
-            fprintf('loaded slice %02d in %d sec',si,telapsed(si))
-        end
-    end
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 if iscolumn(NI_time_stamp)
     NI_time_stamp = NI_time_stamp';
 end
@@ -317,11 +287,10 @@ end
 NI_time_stamp_ms = NI_time_stamp*1e3/samp_rate;
 SI_time_stamp_ms = SI_sig_rise*1e3/samp_rate;
 
+
 % select time-stamps for the corresponding slice
-
+pick_frame = false(nSlices,nFramesTotal);
 for si = 1:nSlices
-    pick_frame = false(nSlices,nFramesTotal);
-
     if length(SI_time_stamp_ms) >= nFramesTotal;
         pick_frame(si,si:(nSlices+fastZDiscardFlybackFrames):nFramesTotal) = true;
         % SI_time_stamp_ms = SI_time_stamp_ms(pick_frame);
@@ -350,8 +319,45 @@ for si = 1:nSlices
     end
 end
 
-% pick appropriate ScanImage time stamps
-% SI_time_stamp_ms_pick = SI_time_stamp_ms(pick_frame(si,:));
+%%%%%%%%%%% change the file path of bin files for dF extraction %%%%%%%%%%%
+if 1
+    tstart = tic;
+    dcell = [];
+    cell_slice = [];
+    dF = [];
+    dFsp_all = [];
+    for si = 1:nSlices
+        if ismember(si,sliceSet)
+            if nSlices==1
+                load(fullfile(PathName,data_file.name));
+            else
+                load(fullfile(PathName,data_file(si).name));
+            end
+            if exist('dat','var') % for older files
+                cl = dat.cl;
+                img0 = dat.img0;
+                res = dat.res;
+                Fcell = dat.F.Fcell;
+            end
+            n_cell = length(cl.dcell);
+            % isgood = cl.iscell(651:end); % changing the name because iscell is MATLAB function
+            dcell = [dcell;cl.dcell];
+            cell_slice = [cell_slice;si*ones(n_cell,1)];
+            dF = cat(2,dF,Fcell{1}(ops0.Nk+1:end,:));
+            dFsp_all = cat(2,dFsp_all,dFsp);
+
+            if 0
+                sp = zeros(n_cell,nFramesTotal);
+                for ci = 1:n_cell
+                    sp(ci,cl.dcell{ci}.st) = cl.dcell{ci}.c;
+                end
+            end
+            telapsed(si) = toc(tstart);
+            fprintf('loaded slice %02d in %d sec\n',si,round(telapsed(si)))
+        end
+    end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:size(data,1)
     temp = interp1(NI_time_stamp_ms,data(i,:),SI_time_stamp_ms);
@@ -359,15 +365,20 @@ for i = 1:size(data,1)
 end
 
 data.TM = [SI_time_stamp_ms;interpData];
+% data.dF = dF;
+data.dFsp = dFsp_all;
 data.pick_frame = pick_frame;
 data.dcell = dcell;
 data.cell_slice = cell_slice;
 data.nSlices = nSlices;
 data.fastZDiscardFlybackFrames = fastZDiscardFlybackFrames;
+data.V = img0.V;
+data.iclust = res.iclust;
+ops = ops0;
     
 % FOV1_001_Slice03_Channel01_File001
-save_name = sprintf('Slice%02d_Channel%02d_sessionData.mat',nSlices,channelNum);
-save(fullfile(PathName,save_name),'TM','data','ops');
+save_name = sprintf('%s_Slice%02d_Channel%02d_sessionData.mat',acqName,nSlices,channelNum);
+save(fullfile(PathName,save_name),'data','ops');
 if exist('roiList','var')
     save(fullfile(PathName,save_name),'roiList','-append');
 end
