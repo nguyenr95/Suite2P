@@ -60,7 +60,8 @@ parfor nSig = 1:nSigs
 end
 
 % the basis functions should depend on timescale of sensor and imaging rate
-mtau             = ops.imageRate * ops.sensorTau/ops.nplanes; 
+mtau             = ops.imageRate * ops.sensorTau/ops.nplanes;
+save('C:\Users\Shin\Documents\MATLAB\mtau.mat','ops');
 
 coefNeu = .9; % initialize neuropil subtraction coef with 0.8
 sd0   = std(Ff-coefNeu*Fneu - my_conv2(Ff-coefNeu*Fneu, 2, 1), [], 1);
