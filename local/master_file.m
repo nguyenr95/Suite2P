@@ -42,6 +42,7 @@ ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyL
 ops0.ShowCellMap            = 1;
 ops0.DeleteBin              = 0; % set to 1 to delete bin file after processing
 
+ops0.diameter               = 10; % mean diameter of your ROIs (varies with FOV magnification)
 
 % the following settings shouldn't need to be adjusted
 ops0.NavgFramesSVD          = 5000; % how many (pooled) frames to do the SVD based on
@@ -84,6 +85,7 @@ for iexp = 1:length(db)
             disp(db(iexp).comments);
             
             % copy files from zserver
+            run_pipeline(db(iexp), ops0);
             
             % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
             % add_deconvolution(ops1, db(iexp), clustrules);
