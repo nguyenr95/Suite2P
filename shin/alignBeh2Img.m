@@ -1,15 +1,16 @@
 function alignBeh2Img(varargin)
 
-% Align Virmen and ScanImage sync pulses
+% Align Virmen behavioral data to ScanImage sync pulses
 
 varargin2V(varargin);
-% select planes to analyze
-% sliceSet = [2,8];
-% sliceSet = [1,2,3,7,8,9];
 
-if ~exist('data_file','var')
+if ~exist('ops_file','var')
     folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
     [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
+    load(fullfile(PathName,ops_file));
+    ops = ops1{1};
+else
+    [PathName,ops_file] = fileparts(ops_file);
     load(fullfile(PathName,ops_file));
     ops = ops1{1};
 end
@@ -57,7 +58,7 @@ end
 nFramesTotal = ops.Nframes * ops.nplanes; % default num of frames
 
 switch MatlabPulseMode
-    case 'analog'
+    case 'analog' % recorded by Wavesurfer
         folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA022\161129\';
         [obj_file,PathName] = uigetfile([folder_name],'MultiSelect','off');
         load(fullfile(PathName,obj_file));
@@ -68,9 +69,7 @@ switch MatlabPulseMode
         file_name = [file_name(1:zeroInd-1),file_name(zeroInd+1:end)];
         file_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA022\161129\FOV1_0001.h5';
         wsData = h5read(file_name,'/sweep_0001/analogScans');
-        % wsData = h5read(file_name,'/trial_0001/analogScans');
 
-        % si_time_stamp = find(diff(wsData(:,4)')>7800)*1e3/samp_rate; % scan image pulse
         SIsig = wsData(:,4)';
         temp = SIsig>7800;
         SI_sig_rise = find(diff(temp)==1)+1;
@@ -168,7 +167,6 @@ switch MatlabPulseMode
             end
         end
         NI_time_stamp = (sig_rise' - sig_rise(1));
-        % i_time_stamp = (sig_rise' - sig_rise(1))/samp_rate;
         num_pulse = find(isfinite(amp),1,'last');
         
         if num_pulse == length(m_time_stamp)
@@ -179,7 +177,7 @@ switch MatlabPulseMode
         
         data = data(:,1:num_pulse);
         
-    case 'digital'
+    case 'digital' % recorded by Matthias' Sync obj
         % detecting MATLAB sync pulses
         file_name = sprintf('%s%s\\%s\\%s_0001.h5','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,'FOV1');
         if exist(file_name,'file')
@@ -195,7 +193,6 @@ switch MatlabPulseMode
             SIsig = a.sweep_0001.analogScans(:,pick_SI);
         end
 
-        % file_name = dir(sprintf('%s%s%03d\\%s\\%s_syncData*.mat','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',obj.initials,obj.mouseNum,obj.recDate,obj.acqName(1:4)));
         file_name = dir(sprintf('%s%s\\%s\\%s_syncData*.mat','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,'FOV1'));
         if ~isempty(file_name)
             file_name = sprintf('%s%s\\%s\\%s','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,file_name.name);
@@ -288,7 +285,6 @@ for i = 1:size(data,1)
 end
 
 BM = [SI_time_stamp_ms;interpData];
-    
-% FOV1_001_Slice03_Channel01_File001
+
 save_name = sprintf('B_%s_%s.mat',ops.mouse_name,ops.date);
 save(fullfile(PathName,save_name),'BM');
