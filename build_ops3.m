@@ -83,6 +83,26 @@ try
         ops.nchannels_red = length(ch);
     end
 catch
+    % for Scanimage 2015 -- extracting SI metadata SK 17/02/28
+    info = imfinfo(fullfile(ops.RootDirRaw,ops.rawMovies(1).name));
+    temp = info.Software;
+    ind = strfind(temp,'SI.');
+    temp(ind(2:end)-1) = ';';
+    temp(end) = ';';
+    eval(temp);
+    
+    fZ              = SI.hFastZ.enable;
+    ops.nchannels   = length(SI.hChannels.channelSave);
+    
+    if fZ
+        stackNumSlices = SI.hFastZ.numFramesPerVolume;
+        fastZDiscardFlybackFrames = SI.hFastZ.discardFlybackFrames;
+        ops.nplanes = stackNumSlices+fastZDiscardFlybackFrames;
+    else
+        stackNumSlices = 1;
+        ops.nplanes = 1;
+    end
+    ops.zoomMicro = SI.hRoiManager.scanZoomFactor;
 end
 
 if ~(isfield(ops, 'planesToProcess') && ~isempty(ops.planesToProcess))
@@ -103,3 +123,4 @@ ops.CharSubDirs = CharSubDirs;
 ops.ResultsSavePath = sprintf('%s\\%s\\%s\\%s\\', ops.ResultsSavePath, ops.mouse_name, ops.date);
 % ops.ResultsSavePath = sprintf('%s\\%s\\%s\\%s\\', ops.ResultsSavePath, ops.mouse_name, ops.date, CharSubDirs);
 
+end

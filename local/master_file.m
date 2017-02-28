@@ -5,7 +5,8 @@
 
 % make_db_example;
 % make_db
-make_db4Alice;
+% make_db4Alice;
+make_dbM1M2;
 
 [toolbox_path,~,~] = fileparts(which('run_pipeline'));
 
@@ -40,7 +41,7 @@ ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exa
 ops0.showTargetRegistration = 1;
 ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging'; % location of saved image data
 ops0.ShowCellMap            = 1;
-ops0.DeleteBin              = 0; % set to 1 to delete bin file after processing
+ops0.DeleteBin              = 1; % set to 1 to delete bin file after processing
 
 ops0.diameter               = 10; % mean diameter of your ROIs (varies with FOV magnification)
 
