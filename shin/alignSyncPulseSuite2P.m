@@ -1,22 +1,24 @@
-function alignSyncPulseSuite2P(varargin)
+function alignSyncPulseSuite2P(mouseNum,date_num,varargin)
 
 % Align Virmen and ScanImage sync pulses
-
+initials = getInitials(mouseNum);
 varargin2V(varargin);
+mouseID = sprintf('%s%03d',initials,mouseNum);
 % select planes to analyze
 % sliceSet = [2,8];
 % sliceSet = [1,2,3,7,8,9];
 
 if ~exist('data_file','var')
-    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161221\';
+    folder_name = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Shin\\ShinDataAll\\Suite2P\\%s\\%d\\',mouseID,date_num);
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201_LK\';
     % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
-    [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
-    load(fullfile(PathName,ops_file));
+    [ops_file,s2pPathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
+    load(fullfile(s2pPathName,ops_file));
+    ops = ops1{1};
     ops0 = ops;
-    data_file = dir([PathName,'*_proc.mat']);
-    % ops.isgood_filename = fullfile(PathName,[data_file.name(1:end-4),'_isgood.mat']);
-    % data = matfile(fullfile(PathName,data_file));
+    data_file = dir([s2pPathName,'*_proc.mat']);
+    % ops.isgood_filename = fullfile(s2pPathName,[data_file.name(1:end-4),'_isgood.mat']);
+    % data = matfile(fullfile(s2pPathName,data_file));
 end
 
 nSlices = ops.nplanes;
@@ -63,15 +65,16 @@ nFramesTotal = ops.Nframes * ops.nplanes; % default num of frames
 
 switch MatlabPulseMode
     case 'analog'
-        folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA022\161129\';
-        [obj_file,PathName] = uigetfile([folder_name],'MultiSelect','off');
-        load(fullfile(PathName,obj_file));
-        obj = DA022_161129_FOV1_00001;
+        folder_name = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Shin\\ShinDataAll\\Imaging\\%s\\%d\\',mouseID,date_num);
+        [obj_file,ImgPathName] = uigetfile([folder_name],'MultiSelect','off');
+        load(fullfile(ImgPathName,obj_file));
+        eval(['obj = ',obj_file(1:end-4),';']);
         samp_rate = 1e3;
-        file_name = [obj.defaultDir,obj.acqName,'.h5'];
-        zeroInd = strfind(file_name,'0000');
-        file_name = [file_name(1:zeroInd-1),file_name(zeroInd+1:end)];
-        file_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA022\161129\FOV1_0001.h5';
+        file_name = [obj.defaultDir,'FOV1_0001.h5'];
+        file_name = changePath4Server(file_name);
+        % zeroInd = strfind(file_name,'0000');
+        % file_name = [file_name(1:zeroInd-1),file_name(zeroInd+1:end)];
+        % file_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA023\170303\FOV1_0001.h5';
         wsData = h5read(file_name,'/sweep_0001/analogScans');
         % wsData = h5read(file_name,'/trial_0001/analogScans');
 
@@ -172,7 +175,8 @@ switch MatlabPulseMode
                 k = k+1;
             end
         end
-        NI_time_stamp = (sig_rise' - sig_rise(1));
+        NI_time_stamp = sig_rise;
+        % NI_time_stamp = (sig_rise' - sig_rise(1));
         % i_time_stamp = (sig_rise' - sig_rise(1))/samp_rate;
         num_pulse = find(isfinite(amp),1,'last');
         
@@ -322,36 +326,30 @@ end
 %%%%%%%%%%% change the file path of bin files for dF extraction %%%%%%%%%%%
 if 1
     tstart = tic;
-    dcell = [];
+    stat = [];
     cell_slice = [];
     dF = [];
     dFsp_all = [];
     for si = 1:nSlices
         if ismember(si,sliceSet)
             if nSlices==1
-                load(fullfile(PathName,data_file.name));
+                load(fullfile(s2pPathName,data_file.name));
             else
-                load(fullfile(PathName,data_file(si).name));
+                load(fullfile(s2pPathName,data_file(si).name));
             end
             if exist('dat','var') % for older files
                 cl = dat.cl;
-                img0 = dat.img0;
+                mimg = dat.mimg;
                 res = dat.res;
-                Fcell = dat.F.Fcell;
+                Fcell = dat.Fcell;
             end
-            n_cell = length(cl.dcell);
+            n_cell = length(dat.stat);
             % isgood = cl.iscell(651:end); % changing the name because iscell is MATLAB function
-            dcell = [dcell;cl.dcell];
+            stat = [stat;dat.stat];
             cell_slice = [cell_slice;si*ones(n_cell,1)];
-            dF = cat(2,dF,Fcell{1}(ops0.Nk+1:end,:));
+            dF = cat(2,dF,Fcell{1});
             dFsp_all = cat(2,dFsp_all,dFsp);
 
-            if 0
-                sp = zeros(n_cell,nFramesTotal);
-                for ci = 1:n_cell
-                    sp(ci,cl.dcell{ci}.st) = cl.dcell{ci}.c;
-                end
-            end
             telapsed(si) = toc(tstart);
             fprintf('loaded slice %02d in %d sec\n',si,round(telapsed(si)))
         end
@@ -369,17 +367,17 @@ data.TM = [SI_time_stamp_ms;interpData];
 % data.dF = dF;
 data.dFsp = dFsp;
 data.pick_frame = pick_frame;
-data.dcell = dcell;
+data.stat = stat;
 data.cell_slice = cell_slice;
 data.nSlices = nSlices;
 data.fastZDiscardFlybackFrames = fastZDiscardFlybackFrames;
-data.V = img0.V;
+data.mimg = mimg;
 data.iclust = res.iclust;
 ops = ops0;
     
 % FOV1_001_Slice03_Channel01_File001
 save_name = sprintf('%s_Slice%02d_Channel%02d_sessionData.mat',acqName,nSlices,channelNum);
-save(fullfile(PathName,save_name),'data','ops');
+save(fullfile(s2pPathName,save_name),'data','ops');
 if exist('roiList','var')
-    save(fullfile(PathName,save_name),'roiList','-append');
+    save(fullfile(s2pPathName,save_name),'roiList','-append');
 end
