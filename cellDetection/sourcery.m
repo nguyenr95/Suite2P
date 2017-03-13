@@ -96,7 +96,7 @@ while 1
        Nfirst = numel(ind); 
     end
     
-    if numel(ind)==0 || numel(ind)<Nfirst/20
+    if numel(ind)==0 || numel(ind)<Nfirst * getOr(ops, 'stopSourcery', 1/20)
         break;
     end
     
@@ -210,9 +210,9 @@ end
 
 fprintf('%d total ROIs, err %4.4f, thresh %4.4f \n', icell, err(end), Th)
 
-mLam = mLam(:, 1:icell);
+mLam  =  mLam(:, 1:icell);
 mLam0 = mLam0(:, 1:icell);
-mPix = mPix(:, 1:icell);
+mPix  =  mPix(:, 1:icell);
 %%
 
 % subtract off neuropil only

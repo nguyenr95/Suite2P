@@ -14,7 +14,6 @@ nchannels          = getOr(ops, {'nchannels'}, 1);
 ichannel           = getOr(ops, {'gchannel'}, 1);
 rchannel           = getOr(ops, {'rchannel'}, 2);
 red_align          = getOr(ops, {'AlignToRedChannel'}, 0);
-BiDiPhase          = getOr(ops, {'BiDiPhase'}, 0);
 LoadRegMean        = getOr(ops, {'LoadRegMean'}, 0);
 ops.RegFileBinLocation = getOr(ops, {'RegFileBinLocation'}, []);
 ops.splitFOV           = getOr(ops, {'splitFOV'}, [1 1]);
@@ -37,11 +36,12 @@ ops.Lx = Lx;
 
 if ops.doRegistration
     IMG = GetRandFrames(fs, ops);    
+    
     % compute phase shifts from bidirectional scanning
-    if ops.dobidi
+    if ~getOr(ops, {'BiDiPhase'}, 0) && ops.dobidi
         BiDiPhase = BiDiPhaseOffsets(IMG);
     else
-        BiDiPhase = 0;
+        BiDiPhase = getOr(ops, {'BiDiPhase'}, 0);
     end
     fprintf('bi-directional scanning offset = %d pixels\n', BiDiPhase);
    
@@ -187,9 +187,11 @@ for i = 1:numPlanes
     
     if ~isempty(ops.RegFileTiffLocation)
         ops1{i} = write_reg_to_tiff(fid{i}, ops1{i}, i);
+        frewind(fid{i});
     end    
     if ~isempty(ops.nimgbegend) && ops.nimgbegend>0
         ops1{i} = getBlockBegEnd(fid{i}, ops1{i}); % get mean of first and last frames in block (to check for drift)
+        frewind(fid{i});
     end
     if ~isempty(ops.RegFileBinLocation)
         str = sprintf('%d_',ops1{i}.expts);

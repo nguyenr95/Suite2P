@@ -14,7 +14,7 @@ Ireg = diag([ones(Nk,1); zeros(nBasis,1)]);
 
 covL = [m.LtL m.LtS; m.LtS' m.StS];
 
-covLinv = inv(covL + 1e-4 * Ireg);
+% covLinv = inv(covL + 1e-4 * Ireg);
 % covLinv = covLinv ./ repmat(diag(covLinv), 1, size(covLinv,2));
 %% get signals  
 
@@ -62,7 +62,7 @@ while 1
     end
     %
     StU         = S' * data;
-    Fdeconv     = covLinv * cat(1, Ftemp, StU);
+    Fdeconv     = covL\cat(1, Ftemp, StU);
     
     Fneu(:,ix + (1:NT))     = m.LtS * Fdeconv(1+Nk:end, :); % estimated neuropil
     F(:,ix + (1:NT))        = Fneu(:,ix + (1:NT)) + Fdeconv(1:Nk, :); % estimated ROI signal
@@ -77,6 +77,32 @@ while 1
     end
 end
 fclose(fid);
+%% add the means back in to both neuropil and total
+data = my_conv2(mimg1, ops.sig, [1 2]);
+data = bsxfun(@rdivide, data, m.sdmov);
+data = single(reshape(data, [], 1));
+
+scalefactors = nan(numel(stat),1);
+Ftemp = zeros(Nk, 1, 'single');
+for k = 1:Nk
+    ipix = stat(k).ipix(:)';
+    if ~isempty(ipix)
+        Ftemp(k,:) = stat(k).lam(:)' * data(ipix,1);
+        scalefactors(k) = mean(m.sdmov(ipix));
+    end
+end
+%
+StU         = S' * data;
+Fdeconv     = covL\cat(1, Ftemp, StU);
+
+muS                     = m.LtS * Fdeconv(1+Nk:end, 1); % estimated neuropil
+
+Fneu     = bsxfun(@plus, Fneu, muS); % estimated neuropil
+F        = bsxfun(@plus, F,    muS+Fdeconv(1:Nk, 1));
+
+Fneu     = bsxfun(@times, Fneu, scalefactors); % estimated neuropil
+F        = bsxfun(@times, F,    scalefactors);
+
 %% get activity stats
 indNoNaN    = find(~ops.badframes);
 ix          = cumsum(~ops.badframes) + 1;

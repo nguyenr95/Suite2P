@@ -11,13 +11,19 @@ ops0.getROIs                        = getOr(ops0, {'getROIs'}, 1);   % whether t
 ops0.getSVDcomps                    = getOr(ops0, {'getSVDcomps'}, 1);   % whether to save SVD components to disk for later processing
 ops0.writeSVDroi                    = getOr(ops0, {'writeSVDroi'}, 1);   % whether to save SVDroi components to disk for later processing
 ops0.nSVD                           = getOr(ops0, {'nSVD'}, 1000);   % how many SVD components to save to disk
-if isfield(ops0, 'numBlocks') && ~isempty(ops0.numBlocks) && ops0.numBlocks> 1
-    ops0.nonrigid                   = 1;
-end
-ops0.nonrigid                       = getOr(ops0, 'nonrigid', 0);   
-ops0.kriging                        = getOr(ops0, 'kriging', 1);  
+
 
 ops                                 = build_ops3(db, ops0);
+if isfield(ops, 'numBlocks') && ~isempty(ops.numBlocks)
+    if numel(ops.numBlocks) == 1
+        ops.numBlocks = [ops.numBlocks 1];
+    end
+    if sum(ops.numBlocks) > 2
+        ops.nonrigid               = 1;
+    end
+end
+ops.nonrigid                       = getOr(ops, 'nonrigid', 0);   
+ops.kriging                        = getOr(ops, 'kriging', 1);  
 
 if ~isfield(ops, 'diameter') || isempty(ops.diameter)
     warning('you have not specified mean diameter of your ROIs')
