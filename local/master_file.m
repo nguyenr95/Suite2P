@@ -5,8 +5,8 @@
 
 % make_db_example;
 % make_db
-make_db4Alice;
-% make_dbM1M2;
+% make_db4Alice;
+make_dbM1M2;
 
 [toolbox_path,~,~] = fileparts(which('run_pipeline'));
 
