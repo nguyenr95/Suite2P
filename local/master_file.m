@@ -20,7 +20,7 @@ end
 ops0.clustModel  = 'neuropil'; % standard or neuropil
 ops0.neuropilSub = 'surround'; % none, surround or model
 
-ops0.useGPU                 = 1; % if you can use a GPU in matlab this accelerate registration approx 3 times
+ops0.useGPU                 = 0; % if you can use a GPU in matlab this accelerate registration approx 3 times
 ops0.doRegistration         = 0;
 % root paths for files and temporary storage (ideally an SSD drive. my SSD is C)
 ops0.RegFileTiffLocation    = []; %'D:/DATA/'; % leave empty to NOT save registered tiffs

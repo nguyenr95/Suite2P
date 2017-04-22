@@ -32,9 +32,11 @@ while 1
     data = single(data);
     data = reshape(data, Ly, Lx, []);
     
-    % ignore bad frames
-    badi = ops.badframes(ix + [1:size(data,3)]);
-    data(:,:, badi) = [];
+    if 0
+        % ignore bad frames
+        badi = ops.badframes(ix + [1:size(data,3)]);
+        data(:,:, badi) = [];
+    end
     
     % subtract off the mean of this batch
     if nargin==1
@@ -145,6 +147,7 @@ if nargin==1 || ~strcmp(clustModel, 'CNMF')
             data = bsxfun(@minus, data, mean(data,3));
             %     data = bsxfun(@minus, data, ops.mimg1);
             data = data(ops.yrange, ops.xrange, :);
+            ops.useGPU = 0;
             if ops.useGPU
                 Fs(:, ix + (1:size(data,3))) = gpuBlockXtY(U, reshape(data, [], size(data,3)));
             else
