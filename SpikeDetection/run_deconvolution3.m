@@ -1,11 +1,6 @@
 function stat = run_deconvolution3(ops, dat)
 % outputs a cell array of deconvolved spike times and amplitudes.
-% Optionally output this in matrix form Ffr (very sparse).
 
-% load the initialization of the kernel    
-% load(fullfile(ops.toolbox_path, 'SpikeDetection\kernel.mat'));
-
-% copy existing information
 stat = dat.stat;
 
 if 0 % consider only the first 10 cells
@@ -50,7 +45,12 @@ npad = 250;
 [NT, NN] = size(Ff);
 
 ops.fs            = getOr(ops, 'fs', ops.imageRate/ops.nplanes);
-[coefNeu, inomax] = my_ica(Ff, Fneu, ops.fs, coefDefault);
+
+if ~isfield(stat, 'neuropilCoefficient')
+    [coefNeu, inomax] = my_ica(Ff, Fneu, ops.fs, coefDefault, ops.maxNeurop);
+else
+   coefNeu = [stat.neuropilCoefficient]; 
+end
 
 Ff = Ff - bsxfun(@times, Fneu, coefNeu(:)');
 
@@ -69,13 +69,22 @@ kernel = normc(kernel(:));
 kernelS   = repmat(kernel, 1, NN);
 dcell = cell(NN,1);
 
-% run the deconvolution to get fs etc\
+
+switch ops.deconvType
+    case 'OASIS'
+        [sp, ca, coefs, B] = wrapperOASIS(ops, F, N);
+    case 'L0'
+
+end
+% run the deconvolution to get fs etc
 parfor icell = 1:size(Ff,2)
     [F1(:,icell),dcell{icell}] = ...
         single_step_single_cell(F1(:,icell), Params, kernelS(:,icell), NT, npad,dcell{icell});
 end
 
 fprintf('Percent bins with spikes %2.4f \n', 100*mean(F1(:)>0))
+
+
 
 % rescale baseline contribution
 for icell = 1:size(Ff,2)
