@@ -125,10 +125,12 @@ for k = 1 %:length(fs) % changed on 16/11/25 by SK
             else
                 ichanset = [ichannel; nFr; nchannels];
             end
+            tstart = tic;
             data = loadFramesBuff(fs{i}(j).name, ichanset(1), ichanset(2), ichanset(3), ops.temp_tiff);
             % data = loadFramesBuff(fs{k}(j).name, ichanset(1), ichanset(2), ...
             %     ichanset(3), ops.temp_tiff);
-
+            telapsed = toc(tstart);
+            fprintf('loaded Movie %d in %d sec\n',j,round(telapsed));
             if abs(BiDiPhase) > 0
                 yrange = 2:2:Ly;
                 if BiDiPhase>0
