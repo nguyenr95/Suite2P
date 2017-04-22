@@ -32,7 +32,7 @@ hgy = exp(-(((0:ly-1) - fix(ly/2))/smoothSigma).^2);
 hg = hgy'*hgx;
 fhg = real(fftn(ifftshift(single(hg/sum(hg(:))))));
 
-% fft of reference image
+% fft of reference image 
 eps0          = single(1e-10);
 cfRefImg = conj(fftn(refImg));
 if phaseCorrelation
@@ -60,7 +60,7 @@ xt = [x1(:) x2(:)]';
 if useGPU
     xt = gpuArray(single(xt));
 end
-    
+
 if ops.kriging
     % compute kernels for regression
     sigL     = .85; % kernel width in pixels
@@ -164,5 +164,8 @@ for bi = 1:nBatches
         
 end
 
+if nargin > 2 && removeMean
+    dv = bsxfun(@minus, dv, mean(dv,1));
+end
 
 

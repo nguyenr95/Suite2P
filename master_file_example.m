@@ -21,6 +21,7 @@ end
 
 ops0.useGPU                 = 1; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
 ops0.fig                    = 1; % turn off figure generation with 0
+% ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 
 % root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
 ops0.RootStorage            = '//zserver4/Data/2P'; % Suite2P assumes a folder structure, check out README file
@@ -37,12 +38,14 @@ ops0.PhaseCorrelation       = 1; % set to 0 for non-whitened cross-correlation
 ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exact number from phase correlation
 ops0.NimgFirstRegistration  = 500; % number of images to include in the first registration pass 
 ops0.nimgbegend             = 250; % frames to average at beginning and end of blocks
+ops0.dobidi                 = 1; % infer and apply bidirectional phase offset
 
 % cell detection options
 ops0.ShowCellMap            = 1; % during optimization, show a figure of the clusters
 ops0.sig                    = 0.5;  % spatial smoothing length in pixels; encourages localized clusters
 ops0.nSVDforROI             = 1000; % how many SVD components for cell clustering
 ops0.NavgFramesSVD          = 5000; % how many (binned) timepoints to do the SVD based on
+ops0.signalExtraction       = 'raw'; % how to extract ROI and neuropil signals: 'raw', 'regression'
 
 % spike deconvolution options
 ops0.imageRate              = 30;   % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
@@ -82,10 +85,10 @@ end
 % cell traces are in dat.Fcell
 % neuropil traces are in dat.FcellNeu
 % manual, GUI overwritten "iscell" labels are in dat.cl.iscell
-
-% stat(icell) contains all other information
-% autoamted iscell label, based on anatomy
-% neuropil subtraction coefficient 
-% st are the deconvolved spike times (in frames)
-% c  are the deconvolved amplitudes
-% kernel is the estimated kernel
+%  
+% stat(icell) contains all other information:
+% iscell: automated label, based on anatomy
+% neuropilCoefficient: neuropil subtraction coefficient, based on maximizing the skewness of the corrected trace (ICA)
+% st: are the deconvolved spike times (in frames)
+% c:  are the deconvolved amplitudes
+% kernel: is the estimated kernel

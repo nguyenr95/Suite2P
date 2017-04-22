@@ -11,13 +11,21 @@ ops0.getROIs                        = getOr(ops0, {'getROIs'}, 1);   % whether t
 ops0.getSVDcomps                    = getOr(ops0, {'getSVDcomps'}, 1);   % whether to save SVD components to disk for later processing
 ops0.writeSVDroi                    = getOr(ops0, {'writeSVDroi'}, 1);   % whether to save SVDroi components to disk for later processing
 ops0.nSVD                           = getOr(ops0, {'nSVD'}, 1000);   % how many SVD components to save to disk
-if isfield(ops0, 'numBlocks') && ~isempty(ops0.numBlocks) && ops0.numBlocks> 1
-    ops0.nonrigid                   = 1;
-end
-ops0.nonrigid                       = getOr(ops0, 'nonrigid', 0);   
-ops0.kriging                        = getOr(ops0, 'kriging', 1);  
+ops0.signalExtraction               = getOr(ops0, 'signalExtraction', 'raw');
+ops0.interpolateAcrossPlanes        = getOr(ops0, 'interpolateAcrossPlanes', 0);
+ops0.maxNeurop                      = getOr(ops0, 'maxNeurop', 1.5);
 
 ops                                 = build_ops3(db, ops0);
+if isfield(ops, 'numBlocks') && ~isempty(ops.numBlocks)
+    if numel(ops.numBlocks) == 1
+        ops.numBlocks = [ops.numBlocks 1];
+    end
+    if sum(ops.numBlocks) > 2
+        ops.nonrigid               = 1;
+    end
+end
+ops.nonrigid                       = getOr(ops, 'nonrigid', 0);   
+ops.kriging                        = getOr(ops, 'kriging', 1);  
 
 if ~isfield(ops, 'diameter') || isempty(ops.diameter)
     warning('you have not specified mean diameter of your ROIs')
@@ -26,7 +34,7 @@ end
 ops.diameter                        = getOr(ops, 'diameter', 10);
 ops.clustrules.diameter             = ops.diameter;
 ops.clustrules                      = get_clustrules(ops.clustrules);
-%%
+%
 % this loads ops1 and checks if processed binary files exist
 ops1 = [];
 opath = sprintf('%sregops_%s_%s.mat', ops.ResultsSavePath, ops.mouse_name, ops.date);
@@ -45,9 +53,6 @@ end
 clustModel     = getOr(ops, {'clustModel'}, 'standard');
 neuropilSub    = getOr(ops, {'neuropilSub'}, 'surround');
 splitBlocks    = getOr(ops, {'splitBlocks'}, 'none');
-%
-%i = 1;
-%regops_filename = sprintf('%s/regops_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, i);
 
 % do registration if the processed binaries do not exist
 if processed==0
@@ -111,7 +116,12 @@ for i = 1:length(ops.planesToProcess)
         [ops, stat, model]           = sourcery(ops,U, model);
         
         % extract dF
-        [ops, stat, Fcell, FcellNeu] = extractSignals(ops, model, stat);
+        switch ops.signalExtraction
+            case 'raw'
+                [ops, stat, Fcell, FcellNeu] = extractSignalsNoOverlaps(ops, model, stat);
+            case 'regression'
+                [ops, stat, Fcell, FcellNeu] = extractSignals(ops, model, stat);
+        end
 
         % apply user-specific clustrules to infer stat.iscell
         stat                         = classifyROI(stat, ops.clustrules);

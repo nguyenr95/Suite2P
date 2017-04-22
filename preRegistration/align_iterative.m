@@ -1,3 +1,6 @@
+% takes NimgFirstRegistration mean image and aligns it to itself
+% returns mean image for registration
+
 function ops = align_iterative(data, ops)
 
 % uu = squeeze(sum(sum(data(:,:,:).^2,1),2));
@@ -7,6 +10,7 @@ function ops = align_iterative(data, ops)
 fracImgPreAlign = getOr(ops, 'fracImgPreAlign', 1/2);
 maxImgPreAlign = round(size(data,3) * fracImgPreAlign);
 
+% take most correlated frames to compute initial mean image
 ops.mimg = pick_reg_init(data);
 
 dsold = zeros(size(data,3), 2);

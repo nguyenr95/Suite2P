@@ -415,7 +415,7 @@ if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
     guidata(hObject,h);
     
     str = [];
-    labels = [h.statLabels(2:end), {'iscell'}, {'redcell'}];
+    labels = [h.statLabels(2:end), {'iscell'}, {'redcell'},{'redprob'}];
     for j =1:length(labels)
        if isfield(h.dat.stat, labels{j})
            sl = eval(sprintf('h.dat.stat(ichosen).%s', labels{j}));
@@ -510,6 +510,7 @@ guidata(hObject,h);
 
 function pushbutton99_Callback(hObject, eventdata, h)
 hval = max(0, [h.dat.stat.cmpct]-1);
+% hval = max(0, [h.dat.stat.aspect_ratio]-1);
 h.dat.cl.rands   = .1 + .8 * min(1, .5 * hval/mean(hval));
 h.dat.cl.rands_orig = h.dat.cl.rands;
 redraw_figure(h);

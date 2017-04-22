@@ -1,13 +1,18 @@
+% rigid registration of frames with offsets ds
 function dreg = register_movie(data, ops, ds)
 
 orig_class = class(data);
 
+% compute maximum batch size for GPU
 [h, w, nFrames] = size(data);
 if getOr(ops, 'useGPU', 0)
     nFramesPerBatch = getBatchSize(w*h);
 else
     nFramesPerBatch = 1000; % if not on GPU, should have plenty of RAM available
 end
+%%
+nFramesPerBatch = 8;
+
 nBatches = ceil(nFrames/nFramesPerBatch);
 startFrame = 1:nFramesPerBatch:nFrames;
 endFrame = min(startFrame+nFramesPerBatch-1, nFrames);
@@ -28,13 +33,7 @@ for iBatch = 1:nBatches
     [Nx,Ny] = meshgrid(Nx,Ny);
     Nx = Nx / Lx;
     Ny = Ny / Ly;
-    
-    if ops.useGPU
-        dregBatch = gpuArray.zeros(size(dataBatch), orig_class);
-    else
-        dregBatch = zeros(size(dataBatch), orig_class);
-    end
-    
+
     if ops.useGPU
         dsBatch = gpuArray(permute(ds(idx, :), [3, 2, 1]));
         Nx = gpuArray(single(Nx));
@@ -47,8 +46,9 @@ for iBatch = 1:nBatches
         dph         = 2*pi*(bsxfun(@times, dsBatch(1,1,:), Ny) + ...
             bsxfun(@times, dsBatch(:,2,:), Nx));
         fdata       = fft2(dataBatch);
-        dregBatch = real(ifft2(fdata .* exp(1i * dph)));
+        dregBatch   = gather_try(real(ifft2(fdata .* exp(1i * dph))));
     else % do it frame-by-frame
+        dregBatch = zeros(size(dataBatch), orig_class);
         for i = 1:NT
             dph         = 2*pi*(dsBatch(i,1)*Ny + dsBatch(i,2)*Nx);
             fdata       = fft2(single(dataBatch(:,:,i)));
@@ -56,8 +56,5 @@ for iBatch = 1:nBatches
         end
     end
     
-    if ops.useGPU
-        dregBatch = gather_try(dregBatch);
-    end
     dreg(:,:,idx) = dregBatch;
 end

@@ -1,4 +1,6 @@
-% registers frames using block registration in Y
+% registers frames using block registration in X and Y
+% computes registration offsets separately in each block
+% and smooths offsets over frame
 function ops1 = blockReg2P(ops)
 %%
 if ops.doRegistration
@@ -7,8 +9,9 @@ else
     disp('skipping registration, but assembling binary file');
 end
 
-% default is 8 blocks of 1/6 pixels each
-ops.numBlocks      = getOr(ops, {'numBlocks'}, 8);
+% default is 8 blocks in the Y direction (1/6 pixels each)
+% ops.numBlocks(1) = # of blocks in Y, ops.numBlocks(2) = # of blocks in X
+ops.numBlocks      = getOr(ops, {'numBlocks'}, [8 1]);
 numBlocks          = ops.numBlocks;
 numPlanes = length(ops.planesToProcess);
 ops.numPlanes = numPlanes;
@@ -17,13 +20,22 @@ nplanes            = getOr(ops, {'nplanes'}, 1);
 nchannels          = getOr(ops, {'nchannels'}, 1);
 ichannel           = getOr(ops, {'gchannel'}, 1);
 rchannel           = getOr(ops, {'rchannel'}, 2);
-red_align   = getOr(ops, {'AlignToRedChannel'}, 0);
-BiDiPhase          = getOr(ops, {'BiDiPhase'}, 0);
+red_align          = getOr(ops, {'AlignToRedChannel'}, 0); % register frames using red channel
 LoadRegMean        = getOr(ops, {'LoadRegMean'}, 0);
-ops.RegFileBinLocation = getOr(ops, {'RegFileBinLocation'}, []);
-ops.splitFOV           = getOr(ops, {'splitFOV'}, [1 1]);
-ops.RegFileTiffLocation = getOr(ops, {'RegFileTiffLocation'}, []);
-ops.dobidi         = getOr(ops, {'dobidi'}, 1);
+ops.RegFileBinLocation = getOr(ops, {'RegFileBinLocation'}, []); % binary file location
+ops.splitFOV           = getOr(ops, {'splitFOV'}, [1 1]); % split FOV into chunks if memory issue
+% ops.splitFOV(1) = # of subsets in Y, ops.splitFOV(2) = # of subsets in X
+ops.RegFileTiffLocation = getOr(ops, {'RegFileTiffLocation'}, []); % write registered tiffs to disk
+
+% bidirectional phase offset computation
+% assumes same bidirectional offset for each plane
+ops.dobidi             = getOr(ops, {'dobidi'}, 1); % compute bidiphase?
+% if set to a value by user, do not recompute
+if isfield(ops, 'BiDiPhase')
+    ops.dobidi         = 0;
+end 
+ops.BiDiPhase          = getOr(ops, {'BiDiPhase'}, 0); % set to default 0
+BiDiPhase              = ops.BiDiPhase;
 
 fs = ops.fsroot;
 
@@ -33,38 +45,48 @@ catch
     error('could not find any tif or tiff, check your path');
 end
 
-%% find the mean frame after aligning a random subset
+% find the mean frame after aligning a random subset
 if ops.doRegistration
     [IMG] = GetRandFrames(fs, ops);    
     [Ly, Lx, ~, ~] = size(IMG);
     ops.Ly = Ly;
     ops.Lx = Lx;
+    
+    % makes blocks (number = numBlocks)
+    % also makes masks for smoothing registration offsets across blocks
     ops = MakeBlocks(ops);
-    fprintf('--- using %d blocks in Y\n', numBlocks);
-    fprintf('--- %d pixels/block; avg pixel overlap = %d pixels\n', round(ops.blockFrac*Ly), round(ops.pixoverlap));
+    fprintf('--- using %d blocks in Y\n', numBlocks(1));
+    fprintf('--- %d pixels/block; avg pixel overlap = %d pixels\n', ...
+        round(ops.blockFrac(1)*Ly), ops.pixoverlap(1) );
+
+    if numBlocks(2) > 1
+        fprintf('--- using %d blocks in X\n', numBlocks(2));
+        fprintf('--- %d pixels/block; avg pixel overlap = %d pixels\n', ...
+            round(ops.blockFrac(2)*Lx),  ops.pixoverlap(2));
+    end
 
     % compute phase shifts from bidirectional scanning
     if ops.dobidi
-        BiDiPhase = BiDiPhaseOffsets(IMG);
-    else
-        BiDiPhase = 0;
+        ops.BiDiPhase = BiDiPhaseOffsets(IMG);
     end
+    BiDiPhase = ops.BiDiPhase;
     fprintf('bi-directional scanning offset = %d pixels\n', BiDiPhase);
-   
-    if abs(BiDiPhase) > 0
-        yrange = 2:2:Ly;
-        if BiDiPhase>0
-            IMG(yrange,(1+BiDiPhase):Lx,:,:) = IMG(yrange, 1:(Lx-BiDiPhase),:,:);
-        else
-            IMG(yrange,1:Lx+BiDiPhase,:,:)   = IMG(yrange, 1-BiDiPhase:Lx,:,:);
-        end
-    end
+    % shift random frames by BiDiPhase
+    if abs(BiDiPhase) > 0 
+        IMG = ShiftBiDi(BiDiPhase, IMG, Ly, Lx);
+    end 
+    
+    % for each plane: align chosen frames to average to generate target image
+    % aligned in blocks
     for i = 1:numPlanes
         ops1{i} = blockAlignIterative(squeeze(IMG(:,:,ops.planesToProcess(i),:)), ops);
     end
+    
+    % display target image
    if ops.showTargetRegistration
        PlotRegMean(ops1,ops);
    end
+% do not compute target mean image   
 else
     [Ly, Lx] = size(IMG);
     for i = 1:numPlanes
@@ -77,7 +99,7 @@ end
 clear IMG
 
 
-%% prepare individual options files and open binaries
+% prepare individual options files and open binaries
 for i = 1:numPlanes
     ops1{i}.RegFile = fullfile(ops.RegFileRoot, sprintf('tempreg_plane%d.bin',...
         ops.planesToProcess(i)));
@@ -89,15 +111,16 @@ for i = 1:numPlanes
     fid{i}             = fopen(ops1{i}.RegFile, 'w');
     ops1{i}.DS          = [];
     ops1{i}.CorrFrame   = [];
-    ops1{i}.mimg1       = zeros(Ly, Lx);
-    for ib = 1:numBlocks
+    ops1{i}.mimg1       = ops1{i}.mimg;
+    for ib = 1:numBlocks(1)*numBlocks(2)
         ops1{i}.mimgB{ib} = ops1{i}.mimg(ops1{i}.yBL{ib}, ops1{i}.xBL{ib});
     end
 end
 nbytes = fs{1}(1).bytes;
 nFr = nFramesTiff(fs{1}(1).name);
 
-%% compute registration offsets from mean img for each frame
+
+% compute registration offsets from mean img for each frame
 xyValid = true(Ly, Lx);
 tic
 for k = 1:length(fs)
@@ -116,12 +139,7 @@ for k = 1:length(fs)
         data = loadFramesBuff(fs{k}(j).name, ichanset(1), ichanset(2), ichanset(3), ops.temp_tiff);
 
         if abs(BiDiPhase) > 0
-            yrange = 2:2:Ly;
-            if BiDiPhase>0
-                data(yrange, (1+BiDiPhase):Lx,:) = data(yrange, 1:(Lx-BiDiPhase),:);
-            else
-                data(yrange, 1:Lx+BiDiPhase,:) = data(yrange, 1-BiDiPhase:Lx,:);
-            end
+            data = ShiftBiDi(BiDiPhase, data, Ly, Lx);
         end
         
         if ops.doRegistration
@@ -135,7 +153,6 @@ for k = 1:length(fs)
                     fprintf('  WARNING: number of frames in tiff (%d) is NOT a multiple of number of channels!\n', j);
                 end
                 ichanset = [ichannel; nFr; nchannels];
-%                 data = img.loadFrames(fs{k}(j).name, ichanset(1), ichanset(2), ichanset(3));                
                 data = loadFramesBuff(ops.temp_tiff, ichanset(1), ichanset(2), ichanset(3));               
             end
             
@@ -174,6 +191,7 @@ for i = 1:numPlanes
     
     if ~isempty(ops.RegFileTiffLocation)
         ops1{i} = write_reg_to_tiff(fid{i}, ops1{i}, i);
+        frewind(fid{i});
     end    
     if ~isempty(ops.RegFileBinLocation)
         folder = fullfile(ops1{i}.RegFileBinLocation, ops1{i}.mouse_name, ...
