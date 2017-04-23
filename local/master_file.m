@@ -20,7 +20,7 @@ end
 ops0.clustModel  = 'neuropil'; % standard or neuropil
 ops0.neuropilSub = 'surround'; % none, surround or model
 
-ops0.useGPU                 = 0; % if you can use a GPU in matlab this accelerate registration approx 3 times
+ops0.useGPU                 = 1; % if you can use a GPU in matlab this accelerate registration approx 3 times
 ops0.doRegistration         = 0;
 % root paths for files and temporary storage (ideally an SSD drive. my SSD is C)
 ops0.RegFileTiffLocation    = []; %'D:/DATA/'; % leave empty to NOT save registered tiffs
@@ -30,7 +30,7 @@ ops0.getROIs                = 1;
 ops0.getSVDcomps            = 1;
 ops0.nSVD                   = 1000; % how many SVD components to keep
 
-ops0.temp_tiff              = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\temp\temp.tiff';
+ops0.temp_tiff              = 'C:\Users\Shin\Documents\MATLAB\temp.tiff';
 ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P';
 
 % ops0.temp_tiff              = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\temp\temp.tiff'; % copy data locally first
@@ -41,7 +41,7 @@ ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exa
 ops0.showTargetRegistration = 1;
 ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging'; % location of saved image data
 ops0.ShowCellMap            = 1;
-ops0.DeleteBin              = 1; % set to 1 to delete bin file after processing
+ops0.DeleteBin              = 0; % set to 1 to delete bin file after processing
 
 ops0.diameter               = 10; % mean diameter of your ROIs (varies with FOV magnification)
 
