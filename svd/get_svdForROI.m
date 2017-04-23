@@ -147,7 +147,7 @@ if nargin==1 || ~strcmp(clustModel, 'CNMF')
             data = bsxfun(@minus, data, mean(data,3));
             %     data = bsxfun(@minus, data, ops.mimg1);
             data = data(ops.yrange, ops.xrange, :);
-            %ops.useGPU = 0;
+
             if ops.useGPU
                 Fs(:, ix + (1:size(data,3))) = gpuBlockXtY(U, reshape(data, [], size(data,3)));
             else
