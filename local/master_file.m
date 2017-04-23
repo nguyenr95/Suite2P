@@ -31,7 +31,8 @@ ops0.getSVDcomps            = 1;
 ops0.nSVD                   = 1000; % how many SVD components to keep
 
 ops0.temp_tiff              = 'C:\Users\Shin\Documents\MATLAB\temp.tiff';
-ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P';
+ops0.ResultsSavePath        = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Imaging'; % location of saved image data
+% ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P';
 
 % ops0.temp_tiff              = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P\temp\temp.tiff'; % copy data locally first
 % ops0.ResultsSavePath        = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Suite2P';
