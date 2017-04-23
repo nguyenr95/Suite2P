@@ -121,10 +121,10 @@ if nargin==1 || ~strcmp(clustModel, 'CNMF')
         U               = mov * V;
     end
     U               = single(U);    
+    
+    %%% Skip reshape to avoid error for gpuBlockXtY %%% SK 170423
     % reshape U to frame size
-    U = reshape(U, numel(ops.yrange), numel(ops.xrange), []);
-    
-    
+    % U = reshape(U, numel(ops.yrange), numel(ops.xrange), []);
     
     % write SVDs to disk
     if ~exist(ops.ResultsSavePath, 'dir')
