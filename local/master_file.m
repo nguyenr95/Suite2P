@@ -39,8 +39,7 @@ ops0.PhaseCorrelation       = 1; % set to 0 for non-whitened cross-correlation
 ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exact number from phase correlation
 
 ops0.showTargetRegistration = 1;
-ops0.RootStorage            = 'C:\Users\Shin\Documents\MATLAB\ShinDataAll\Imaging'; % location of saved image data
-% ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging'; % location of saved image data
+ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging'; % location of saved image data
 ops0.ShowCellMap            = 1;
 ops0.DeleteBin              = 0; % set to 1 to delete bin file after processing
 
