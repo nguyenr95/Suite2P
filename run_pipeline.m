@@ -112,6 +112,8 @@ for i = 1:length(ops.planesToProcess)
 
     if ops.getROIs
         
+        ops.imageRate = getOr(ops, {'imageRate'}, 30);
+        
         % get sources in stat, and clustering images in res
         [ops, stat, model]           = sourcery(ops,U, model);
         
