@@ -5,8 +5,8 @@
 % db(iexp).diameter, or ops0.diameter
 
 % overwrite any of these default options in your make_db file for individual experiments
-% make_dbM1M2; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
-make_db4Alice
+make_dbM1M2; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
+% make_db4Alice
 
 [ops0.toolbox_path,~,~] = fileparts(which('run_pipeline'));
 if exist(ops0.toolbox_path, 'dir')
@@ -26,7 +26,7 @@ ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyL
 ops0.temp_tiff              = 'C:\Users\Shin\Documents\MATLAB\temp.tiff'; % copies each remote tiff locally first, into this file
 ops0.RegFileRoot            = 'E:\Imaging\Suite2P';  % location for binary file
 ops0.DeleteBin              = 0; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\Suite2P'; % a folder structure is created inside
+ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P'; % a folder structure is created inside
 ops0.RegFileTiffLocation    = []; %'D:/DATA/'; % leave empty to NOT save registered tiffs (slow)
 
 % registration options
