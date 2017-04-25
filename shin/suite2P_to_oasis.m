@@ -18,17 +18,24 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
     
     if ~exist('data_file','var')
         folder_name = sprintf(['\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\',...
-            'Shin\\ShinDataAll\\Suite2P\\%s\\%d\\'],mouseID,date_num);
-        [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
-        temp = load(fullfile(PathName,ops_file));
+            'Shin\\ShinDataAll\\Suite2P\\%s\\%d'],mouseID,date_num);
+        try
+            ops_file = sprintf('regops_%s_%d',mouseID,date_num);
+            temp = load(fullfile(folder_name,ops_file));
+        catch
+            [ops_file,folder_name] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
+            temp = load(fullfile(folder_name,ops_file));
+        end
         ops0 = temp.ops1{1};
-        data_file = dir([PathName,'*_proc.mat']);
+        data_file = dir(fullfile(folder_name,'*_proc.mat'));
     end
     
     movFile = fullfile(ops0.RootDirRaw,'FOV1_001_001.tif'); % SI4?
     if ~exist(movFile,'file')
         movFile = fullfile(ops0.RootDirRaw,'FOV1_00001_00001.tif'); % SI2016
     end
+    
+    framePeriod = 0.0361;
     
     if ~exist('framePeriod','var')
         castType = 'uint16';
@@ -63,9 +70,9 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
         if ismember(si,sliceSet)
             
             if nSlices==1
-                load(fullfile(PathName,data_file.name));
+                load(fullfile(folder_name,data_file.name));
             else
-                load(fullfile(PathName,data_file(si).name));
+                load(fullfile(folder_name,data_file(si).name));
             end
             telapsed = toc(tstart);
             fprintf('loaded slice %02d in %d sec\n',si,round(telapsed))
@@ -163,14 +170,15 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                     % dFneu(ci,:) = dFneu(ci,:)./baseFf;
                     
                     fprintf('Deconvolving ...\n');
-                    if 0
-                        [c,b,c1,g,sn,sp,snScale] = constrained_foopsi(double(dF),[],[],[],[],[],fR);
-                    else
-                        g = 0.95;
-                        [c, sp, b, g, lam, active_set] = constrained_oasisAR1(double(dF), g, [], [], [], [], []);
-                    end
+                    g = 0.95;
+                    [c, s, b, g, lam, active_set] = constrained_oasisAR1(double(dF), g, [], [], [], [], []);
+                    
                     dFsp.slice(si).cell(ci).dF = dF;
-                    dFsp.slice(si).cell(ci).sp = sp';
+                    dFsp.slice(si).cell(ci).c  = c';
+                    dFsp.slice(si).cell(ci).sp = s';
+                    dFsp.slice(si).cell(ci).b  = b;
+                    dFsp.slice(si).cell(ci).g  = g;
+                    dFsp.slice(si).cell(ci).lam = lam;
                     dFsp.slice(si).cell(ci).neuropilCoef = neuropilCoef;
                     telapsed = toc(tstart);
                     fprintf('done in %.1f sec.\n',telapsed);
@@ -186,5 +194,5 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
             end
         end
     end
-    save(fullfile(PathName,data_file.name),'dFsp','-append')
+    save(fullfile(folder_name,data_file.name),'dFsp','-append')
 end
