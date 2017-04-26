@@ -10,15 +10,18 @@ mouseID = sprintf('%s%03d',initials,mouseNum);
 
 if ~exist('data_file','var')
     folder_name = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Shin\\ShinDataAll\\Suite2P\\%s\\%d\\',mouseID,date_num);
-    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\DA020\161201_LK\';
-    % folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
-    [ops_file,s2pPathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
-    load(fullfile(s2pPathName,ops_file));
-    ops = ops1{1};
-    ops0 = ops;
-    data_file = dir([s2pPathName,'*_proc.mat']);
-    % ops.isgood_filename = fullfile(s2pPathName,[data_file.name(1:end-4),'_isgood.mat']);
-    % data = matfile(fullfile(s2pPathName,data_file));
+    try
+        ops_file = sprintf('regops_%s_%d',mouseID,date_num);
+        temp = load(fullfile(folder_name,ops_file));
+    catch
+        [ops_file,folder_name] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
+        temp = load(fullfile(folder_name,ops_file));
+    end
+    ops0 = temp.ops1{1};
+    ops = ops0;
+    data_file = dir([folder_name,'*_proc.mat']);
+    % ops.isgood_filename = fullfile(folder_name,[data_file.name(1:end-4),'_isgood.mat']);
+    % data = matfile(fullfile(folder_name,data_file));
 end
 
 nSlices = ops.nplanes;
@@ -333,9 +336,9 @@ if 1
     for si = 1:nSlices
         if ismember(si,sliceSet)
             if nSlices==1
-                load(fullfile(s2pPathName,data_file.name));
+                load(fullfile(folder_name,data_file.name));
             else
-                load(fullfile(s2pPathName,data_file(si).name));
+                load(fullfile(folder_name,data_file(si).name));
             end
             if exist('dat','var') % for older files
                 cl = dat.cl;
@@ -365,7 +368,7 @@ end
 
 data.TM = [SI_time_stamp_ms;interpData];
 % data.dF = dF;
-data.dFsp = dFsp;
+data.dFsp = dFsp_all;
 data.pick_frame = pick_frame;
 data.stat = stat;
 data.cell_slice = cell_slice;
@@ -377,7 +380,7 @@ ops = ops0;
     
 % FOV1_001_Slice03_Channel01_File001
 save_name = sprintf('%s_Slice%02d_Channel%02d_sessionData.mat',acqName,nSlices,channelNum);
-save(fullfile(s2pPathName,save_name),'data','ops');
+save(fullfile(folder_name,save_name),'data','ops');
 if exist('roiList','var')
-    save(fullfile(s2pPathName,save_name),'roiList','-append');
+    save(fullfile(folder_name,save_name),'roiList','-append');
 end

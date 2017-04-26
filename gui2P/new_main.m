@@ -59,7 +59,6 @@ try
     
     % construct dat. Everything is loaded except F and Fneu.
     h.dat = load(fullfile(filepath1, filename1));
-    
     flag = 1;
 catch
 end
@@ -73,6 +72,7 @@ if isfield(h.dat, 'dat')
     % proc file loaded
     h.dat = h.dat.dat;
     h.dat.proc_flag = 1;
+    h = classROI(h);
 else
     h.dat.proc_flag = 0;
     

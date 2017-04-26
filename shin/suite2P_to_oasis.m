@@ -171,11 +171,15 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                     
                     fprintf('Deconvolving ...\n');
                     g = 0.95;
-                    [c, s, b, g, lam, active_set] = constrained_oasisAR1(double(dF), g, [], [], [], [], []);
+                    [c, s, b, g, lam, active_set] = constrained_oasisAR1(double(dF), g, [], true, [], [], []);
+                    
+                    % zero padding after the last spike
+                    sp = zeros(1,length(dF));
+                    sp(1:length(s)) = s;
                     
                     dFsp.slice(si).cell(ci).dF = dF;
                     dFsp.slice(si).cell(ci).c  = c';
-                    dFsp.slice(si).cell(ci).sp = s';
+                    dFsp.slice(si).cell(ci).sp = sp;
                     dFsp.slice(si).cell(ci).b  = b;
                     dFsp.slice(si).cell(ci).g  = g;
                     dFsp.slice(si).cell(ci).lam = lam;
