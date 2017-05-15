@@ -1,4 +1,4 @@
-function suite2P_to_oasis(mouseNum,date_num,varargin)
+function suite2P_to_oasis_old(mouseNum,date_num,varargin)
     % Extract Ca signal from suite2P and deconvolve with constrained_oasisAR1
     
     if ~exist('nslices','var') && ~exist('nplanes','var')
@@ -97,8 +97,77 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                     
                     fprintf('Analyzing ROI %d (%d / %d cells)\n',ci,sum(isgood(1:ci)),sum(isgood));
                     fprintf('Computing Neuropil coefficient ... ')
-                    % compute dF
-                    dF = Fcell(ci,:) - bsxfun(@times, FcellNeu(ci,:), dat.stat(ci).neuropilCoefficient); % using the method in extractSignals.m
+                    % compute Neuropil coefficient (as in Acq2P)from plotNeuropilTraces.m
+                    fBody = Fcell(ci,:);
+                    fNeuropil = FcellNeu(ci,:);
+
+                    % Remove excluded frames (removing them seems to be the most
+                    % acceptable solution, since many functions below don't deal well
+                    % with nans, and interpolation might skew results):
+                    % fBody(excludeFrames) = [];
+                    % fNeuropil(excludeFrames) = [];
+
+                    % Remove bleaching:
+                    % fBody = deBleach(fBody, 'runningAvg',9001);
+                    % fNeuropil = deBleach(fNeuropil, 'runningAvg',9001);
+                    [fBody, baselineStats] = deBleach(fBody, 'custom_wfun');
+                    fNeuropil = deBleach(fNeuropil, 'custom_wfun');
+                    f0Body = prctile(fBody,10);
+                    f0Neuropil = prctile(fNeuropil,10);
+
+                    % Smooth traces:
+                    smoothWin = gausswin(smoothWindow)/sum(gausswin(smoothWindow));
+                    fBody = conv(fBody, smoothWin, 'valid');
+                    fNeuropil = conv(fNeuropil, smoothWin, 'valid');
+
+                    % Extract subtractive coefficient btw cell + neuropil and plot
+                    % cutoffFreq = 1; %Cutoff frequency in seconds
+                    % a = framePeriod / cutoffFreq;
+                    % fBodyHighpass = filtfilt([1-a a-1],[1 a-1], fBody);
+                    % fNeuropilHighpass = filtfilt([1-a a-1],[1 a-1], fNeuropil);
+                    fBodyHighpass = fBody-f0Body;
+                    fNeuropilHighpass = fNeuropil-f0Neuropil;
+                    df = smooth(abs(diff(fBodyHighpass)), round(2/framePeriod));
+                    isFChanging = df>2*mode(round(df*100)/100);
+
+                    traceSubSelection = ~isFChanging;
+
+                    %nSmooth = numel(smoothWin);
+                    %traceSubSelection = baselineStats.w(floor(nSmooth/2):end-1-(nSmooth-floor(nSmooth/2)))==1;
+
+                    neuropilCoef = robustfit(fNeuropilHighpass(traceSubSelection),...
+                        fBodyHighpass(traceSubSelection),...
+                        'bisquare',2);
+                    
+                    fprintf('neuropilCoef = %.3f\n',neuropilCoef(2));
+                    % from extractROIsBin.m
+                    traceCell = Fcell(ci,:);
+                    rawTrace = traceCell;
+                    traceNeuropil = FcellNeu(ci,:);
+                    subTrace = traceCell - traceNeuropil*neuropilCoef(2); % subCoef = neuropilCoef(2)
+                    
+                    % from dFcalc.m
+                    if 0
+                        dF = (subTrace - getF_(subTrace,'custom_wfun'))...
+                            ./getF_(rawTrace,'custom_wfun');
+                    else
+                        dF = subTrace;
+                    end
+                    
+                    if 0
+                        figure(1);clf
+                        subplot(4,1,1);plot(rawTrace);title('F cell');
+                        subplot(4,1,2);plot(traceNeuropil);title('F neuropil');
+                        subplot(4,1,3);plot(subTrace);title('F neuropil subtracted');
+                        subplot(4,1,4);plot(dF);title('dF');
+                        set(gcf,'position',[200 200 1500 1000])
+                        drawnow;
+                    end
+                                        
+                    % convert to dF/F without neuropil subtraction
+                    % baseFf = getF_(dF(ci,:), 'custom_wfun');
+                    % dF(ci,:) = dF(ci,:)./baseFf;
+                    % dFneu(ci,:) = dFneu(ci,:)./baseFf;
                     
                     fprintf('Deconvolving ...\n');
                     g = 0.95;
@@ -114,7 +183,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                     dFsp.slice(si).cell(ci).b  = b;
                     dFsp.slice(si).cell(ci).g  = g;
                     dFsp.slice(si).cell(ci).lam = lam;
-                    dFsp.slice(si).cell(ci).neuropilCoefficient = dat.stat(ci).neuropilCoefficient;
+                    dFsp.slice(si).cell(ci).neuropilCoef = neuropilCoef;
                     telapsed = toc(tstart);
                     fprintf('done in %.1f sec.\n',telapsed);
                     

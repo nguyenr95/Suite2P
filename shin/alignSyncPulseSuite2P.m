@@ -68,19 +68,19 @@ nFramesTotal = ops.Nframes * ops.nplanes; % default num of frames
 
 switch MatlabPulseMode
     case 'analog'
-        folder_name = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Shin\\ShinDataAll\\Imaging\\%s\\%d\\',mouseID,date_num);
-        [obj_file,ImgPathName] = uigetfile([folder_name],'MultiSelect','off');
-        load(fullfile(ImgPathName,obj_file));
+        ImgPath = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Shin\\ShinDataAll\\Imaging\\%s\\%d\\',mouseID,date_num);
+        obj_file = sprintf('%s_%d_FOV1_00001.mat',mouseID,date_num);
+        load(fullfile(ImgPath,obj_file));
         eval(['obj = ',obj_file(1:end-4),';']);
         samp_rate = 1e3;
         file_name = [obj.defaultDir,'FOV1_0001.h5'];
         file_name = changePath4Server(file_name);
-        % zeroInd = strfind(file_name,'0000');
-        % file_name = [file_name(1:zeroInd-1),file_name(zeroInd+1:end)];
-        % file_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\DA023\170303\FOV1_0001.h5';
-        wsData = h5read(file_name,'/sweep_0001/analogScans');
+        try
+            wsData = h5read(file_name,'/sweep_0001/analogScans');
+        catch
+            wsData = h5read(file_name,'/sweep_0002/analogScans');
+        end
         % wsData = h5read(file_name,'/trial_0001/analogScans');
-
         % si_time_stamp = find(diff(wsData(:,4)')>7800)*1e3/samp_rate; % scan image pulse
         SIsig = wsData(:,4)';
         temp = SIsig>7800;
