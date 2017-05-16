@@ -150,13 +150,15 @@ switch MatlabPulseMode
                 if isempty(sig_rise_temp2)
                     sig_rise_temp2 = sig_fall_temp + 10;
                 end
-
-                if sig_fall_temp - sig_rise_temp < 2
-                         % transient artifact (spike) at the baseline
-                    if  sig(sig_fall_temp+2) - sig(sig_rise_temp-2) < 0.01
-                        continue
-                    else % transient artifact (spike) at the pulse onset
-                        sig_fall_temp = fall(find(fall>sig_fall_temp+1,1,'first'));
+                
+                if k>1
+                    if sig_fall_temp - sig_rise_temp < 2
+                             % transient artifact (spike) at the baseline
+                        if  abs(sig(sig_fall_temp+2) - sig(sig_rise_temp-2)) < 0.01
+                            continue
+                        else % transient artifact (spike) at the pulse onset
+                            sig_fall_temp = fall(find(fall>sig_fall_temp+1,1,'first'));
+                        end
                     end
                 end
                     % transient artifact (dip) on the pulse. Look for the next fall.
@@ -169,8 +171,7 @@ switch MatlabPulseMode
                 sig_rise(k) = sig_rise_temp + chunk_end(i);
                 sig_fall(k) = sig_fall_temp + chunk_end(i);
                 sig_rise_t(k) = (sig_rise(k) - sig_rise(1))/30e3;
-                amp(k) = mean(sig(sig_rise_temp+1:sig_fall_temp));
-
+                amp(k) = max(sig(sig_rise_temp:sig_fall_temp));
                 if mod(k,1e4)==0
                     fprintf('%d pulses detected\n',k)
                 end
