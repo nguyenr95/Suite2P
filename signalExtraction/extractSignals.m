@@ -117,7 +117,9 @@ save
 % figure out the ICA coefficients here <--- FIX THIS
 ops.fs           = getOr(ops, 'fs', ops.imageRate/ops.nplanes);
 %
-try    
+try 
+    % my_ica was commented out in refs/remotes/cortex-lab/master on
+    % 17/05/17, keep updated with the associated changes!
     [coefNeu, inomax]   = my_ica(F', Fneu', ops.fs, 0.7);
     dF                  = F - bsxfun(@times, Fneu, coefNeu(:));
 
