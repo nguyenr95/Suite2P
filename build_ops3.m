@@ -53,7 +53,7 @@ try
     
     verStr = ['SI.VERSION_MAJOR = ',char(39),'2016b',char(39)];
     
-    if contains(hh, verStr) % For scanimage 2016b, SF
+    if strfind(hh, verStr) % For scanimage 2016b, SF
         str = hh(strfind(hh,'channelSave = '):end);
         ind = strfind(str, 'SI');
         ch = str2num(str(15 : ind(1)-1));
