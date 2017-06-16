@@ -66,7 +66,7 @@ else
     disp('already registered binary found');
     % load ops1_new
 end
-
+% keyboard;
 %%
 for i = 1:length(ops.planesToProcess)
     iplane  = ops.planesToProcess(i);
