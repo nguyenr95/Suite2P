@@ -94,15 +94,31 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
             
             for ci = startCellInd:size(Fcell,1)
                 if isgood(ci)
-                    
+                    %%
                     fprintf('Analyzing ROI %d (%d / %d cells)\n',ci,sum(isgood(1:ci)),sum(isgood));
                     fprintf('Computing Neuropil coefficient ... ')
-                    % compute dF
-                    dF = Fcell(ci,:) - bsxfun(@times, FcellNeu(ci,:), dat.stat(ci).neuropilCoefficient); % using the method in extractSignals.m
+                    if 0
+                        % compute dF
+                        dF = Fcell(ci,:) - bsxfun(@times, FcellNeu(ci,:), dat.stat(ci).neuropilCoefficient); % using the method in extractSignals.m
+                    else
+                        % compute dF/F
+                        fit_mode = 'prctile'; %'exp_linear';
+                        rawTrace = Fcell(ci,:);
+                        subTrace = Fcell(ci,:) - bsxfun(@times, FcellNeu(ci,:), dat.stat(ci).neuropilCoefficient); % using the method in extractSignals.m
+                        rawTraceBase = getF_(rawTrace,fit_mode,ops0.imageRate);
+                        subTraceBase = getF_(subTrace,fit_mode,ops0.imageRate);
+                        dF = (subTrace - subTraceBase)./rawTraceBase;
+                    end
                     
+                    figure(ci)
+                    plot(dF,'-b')
+                    set(gcf,'position',[200 500 1500 400])
+                    
+                    %%
                     fprintf('Deconvolving ...\n');
                     g = 0.95;
-                    [c, s, b, g, lam, active_set] = constrained_oasisAR1(double(dF), g, [], true, [], [], []);
+                    [c, s, b, g, lam, active_set] = sc_constrained_oasisAR1(double(dF), g, [], [], [], [], []);
+                    % [c, s, b, g, lam, active_set] = constrained_oasisAR1(double(dF), g, [], true, [], [], []);
                     
                     % zero padding after the last spike
                     sp = zeros(1,length(dF));
