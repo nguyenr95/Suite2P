@@ -1,17 +1,25 @@
-function alignBeh2Img(varargin)
+function alignBeh2Img(mouse_num,date_num,varargin)
 
 % Align Virmen behavioral data to ScanImage sync pulses
 
 varargin2V(varargin);
-
+mouseID = getMouseID(mouse_num);
 if ~exist('ops_file','var')
-    folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
-    [ops_file,PathName] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
-    load(fullfile(PathName,ops_file));
+    folder_name = fullfile('\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P',mouseID,num2str(date_num));
+    try 
+        ops_file = dir(fullfile(folder_name,'regops*.mat'));
+        if length(ops_file)>1
+            error('Two or more regops files exist. Choose the appropriate file.')
+        end
+        load(fullfile(folder_name,ops_file.name));
+    catch
+        [ops_file,folder_name] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
+        load(fullfile(folder_name,ops_file));
+    end
     ops = ops1{1};
 else
-    [PathName,ops_file] = fileparts(ops_file);
-    load(fullfile(PathName,ops_file));
+    [folder_name,ops_file] = fileparts(ops_file);
+    load(fullfile(folder_name,ops_file));
     ops = ops1{1};
 end
 
@@ -290,4 +298,4 @@ end
 BM = [SI_time_stamp_ms;interpData];
 
 save_name = sprintf('B_%s_%s.mat',ops.mouse_name,ops.date);
-save(fullfile(PathName,save_name),'BM');
+save(fullfile(folder_name,save_name),'BM');
