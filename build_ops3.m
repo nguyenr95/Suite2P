@@ -19,18 +19,21 @@ disp(ops.RootDir);
 
 % build file list
 ops.fsroot = [];
+overview_ind = [];
 for j = 1:ops.nplanes %length(ops.SubDirs) % changed on 16/11/25 by SK
     ops.fsroot{j} = dir(fullfile(ops.RootDir,sprintf('*Slice%02d*.tif',j)));
     if j==1
-        ops.rawMovies = dir(fullfile(ops.RootDirRaw,'*.tif'));
+        ops.rawMovies = dir(fullfile(ops.RootDirRaw,'FOV1_0*.tif'));
         for k = 1:length(ops.rawMovies)
             % Do not include overview image
             if isfinite(strfind(ops.rawMovies(k).name,'overview'));
                 overview_ind = k;
             end
         end
-        pick_ind = (1:length(ops.rawMovies))~=overview_ind;
-        ops.rawMovies = ops.rawMovies(pick_ind);
+        if ~isempty(overview_ind)
+            pick_ind = (1:length(ops.rawMovies))~=overview_ind;
+            ops.rawMovies = ops.rawMovies(pick_ind);
+        end
     end
     % ops.fsroot{j} = dir(fullfile(ops.RootDir,sprintf('*Slice%02d*_File001.tif',j)));
     for k = 1:length(ops.fsroot{j})
