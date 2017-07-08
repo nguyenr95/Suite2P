@@ -5,7 +5,7 @@
 % db(iexp).diameter, or ops0.diameter
 
 % overwrite any of these default options in your make_db file for individual experiments
-make_dbAll; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
+make_dbM1M2; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
 % make_db4Alice;
 % make_db_V1RSP;
 
