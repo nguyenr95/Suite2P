@@ -27,6 +27,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
             temp = load(fullfile(folder_name,ops_file));
         end
         ops0 = temp.ops1{1};
+        % data_file = sprintf('F_%s_%d_plane1_proc.mat',mouseID,date_num);
         data_file = dir(fullfile(folder_name,'*_proc.mat'));
     end
     
@@ -35,40 +36,9 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
         movFile = fullfile(ops0.RootDirRaw,'FOV1_00001_00001.tif'); % SI2016
     end
     
-    framePeriod = 0.0361;
-    
-    if ~exist('framePeriod','var')
-        castType = 'uint16';
-        if 1
-            [~, metaDataSI] = tiffRead(movFile,castType);
-            if isfield(metaDataSI,'SI4')
-                framePeriod = metaDataSI.SI4.scanFramePeriod;
-            elseif isfield(metaDataSI,'SI5')
-                framePeriod = metaDataSI.SI5.scanFramePeriod;
-            elseif isfield(metaDataSI,'SI')
-                framePeriod = metaDataSI.SI.hRoiManager.scanFramePeriod;
-            else
-                warning('Unable to Automatically determine scanFramePeriod')
-                framePeriod = input('Input scanFramePeriod: ');
-            end
-        else
-            % for image from Odin rig
-            info = imfinfo(movFile);
-            temp = info.Software;
-            ind = strfind(temp,'SI.');
-            temp(ind(2:end)-1) = ';';
-            temp(end) = ';';
-            eval(temp);
-            framePeriod = SI.hRoiManager.scanFramePeriod;
-        end
-    end
-    
-    fR = 1/framePeriod;
     tstart = tic;
-
     for si = 1:nSlices
         if ismember(si,sliceSet)
-            
             if nSlices==1
                 load(fullfile(folder_name,data_file.name));
             else
@@ -92,30 +62,51 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                         
             startCellInd = 1;
             
+            fit_mode = 'prctile'; %'exp_linear';
+            base_prctile = 50;
+            
+            if base_prctile==50
+                fprintf('Using the median F for baseline.\n\n')
+            end
+            
+            %% copying F file with a new name
+            file_name_from = sprintf('F_%s_%d_plane1_proc.mat',mouseID,date_num);
+            file_name_to   = sprintf('F_%s_%d_plane1_proc_%dprctile.mat',mouseID,date_num,base_prctile);
+            [success,~,~] = copyfile(fullfile(folder_name,file_name_from),fullfile(folder_name,file_name_to));
+
+            if success
+                fprintf('%s was copied to %s successfully.\n\n',file_name_from,file_name_to);
+            else
+                error('%s was not copied appropriately.\n\n',file_name_from);
+            end
+            %%
+            fprintf('Deconvolving F\n\n')
+            tstart = tic;
             for ci = startCellInd:size(Fcell,1)
                 if isgood(ci)
                     %%
                     fprintf('Analyzing ROI %d (%d / %d cells)\n',ci,sum(isgood(1:ci)),sum(isgood));
-                    fprintf('Computing Neuropil coefficient ... ')
+                    fprintf('Computing dF/F ...... ')
                     if 0
                         % compute dF
                         dF = Fcell(ci,:) - bsxfun(@times, FcellNeu(ci,:), dat.stat(ci).neuropilCoefficient); % using the method in extractSignals.m
                     else
                         % compute dF/F
-                        fit_mode = 'prctile'; %'exp_linear';
                         rawTrace = Fcell(ci,:);
                         subTrace = Fcell(ci,:) - bsxfun(@times, FcellNeu(ci,:), dat.stat(ci).neuropilCoefficient); % using the method in extractSignals.m
-                        rawTraceBase = getF_(rawTrace,fit_mode,ops0.imageRate);
-                        subTraceBase = getF_(subTrace,fit_mode,ops0.imageRate);
+                        rawTraceBase = getF_(rawTrace,fit_mode,ops0.imageRate,base_prctile);
+                        subTraceBase = getF_(subTrace,fit_mode,ops0.imageRate,base_prctile);
                         dF = (subTrace - subTraceBase)./rawTraceBase;
                     end
-                    
+                    fprintf('Done\n')
+                    %{
                     figure(ci)
                     plot(dF,'-b')
                     set(gcf,'position',[200 500 1500 400])
+                    %}
                     
                     %%
-                    fprintf('Deconvolving ...\n');
+                    fprintf('Deconvolving ...... ');
                     g = 0.95;
                     [c, s, b, g, lam, active_set] = sc_constrained_oasisAR1(double(dF), g, [], [], [], [], []);
                     % [c, s, b, g, lam, active_set] = constrained_oasisAR1(double(dF), g, [], true, [], [], []);
@@ -132,12 +123,11 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                     dFsp.slice(si).cell(ci).lam = lam;
                     dFsp.slice(si).cell(ci).neuropilCoefficient = dat.stat(ci).neuropilCoefficient;
                     telapsed = toc(tstart);
-                    fprintf('done in %.1f sec.\n',telapsed);
+                    fprintf('Done in %.1f sec.\n',telapsed);
                     
                     S = whos;
                     mem = sum([S.bytes])*1e-6;
-                    fprintf('%.1f MB used\n',mem);
-                    
+                    fprintf('%.1f MB used\n\n',mem);
                 else
                     dFsp.slice(si).cell(ci).sp = [];
                 end
@@ -145,5 +135,5 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
             end
         end
     end
-    save(fullfile(folder_name,data_file.name),'dFsp','-append')
+    save(fullfile(folder_name,file_name_to),'dFsp','-append')
 end
