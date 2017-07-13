@@ -177,7 +177,8 @@ switch MatlabPulseMode
                 k = k+1;
             end
         end
-        NI_time_stamp = (sig_rise' - sig_rise(1));
+        NI_time_stamp = sig_rise';
+        % NI_time_stamp = (sig_rise' - sig_rise(1));
         num_pulse = find(isfinite(amp),1,'last');
         
         if num_pulse == length(m_time_stamp)
