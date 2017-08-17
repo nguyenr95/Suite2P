@@ -10,7 +10,8 @@ for j = 1:numel(h.dat.Fcell)
     Fneu = cat(2, Fneu, h.dat.FcellNeu{j}(ichosen, :));
 end
 
-plot(my_conv_local(medfilt1(double(F), 3), 3))
+F_smooth = my_conv_local(medfilt1(double(F), 3), 3);
+plot(F_smooth)
 axis tight
 hold on
 
@@ -20,7 +21,9 @@ if isfield(h.dat.stat, 'neuropilCoefficient')
 end
 
 if isfield(h.dat, 'FcellNeu')
-    plot(coefNeu * my_conv_local(medfilt1(double(Fneu), 3), 3))
+    Fneu_smooth = coefNeu * my_conv_local(medfilt1(double(Fneu), 3), 3);
+    plot(Fneu_smooth)
+    plot(F_smooth - Fneu_smooth,'-r')
 end
 
 box off
