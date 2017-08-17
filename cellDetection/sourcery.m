@@ -1,11 +1,15 @@
 % run cell detection on spatial masks U
-function [ops, stat, model] = sourcery(ops, U, model)
+function [ops, stat, model] = sourcery(ops)
 
+tic
+[ops, U0, model, U2]    = get_svdForROI(ops);
+%  U0 = my_conv2(U0, ops.sig, [1 2]);
+ 
 ops.fig         = getOr(ops, 'fig', 1);
 ops.ThScaling   = getOr(ops, 'ThScaling', 1);
 
 % reshape U to be (nMaps x Y x X)
-U0 =  reshape(U, [], size(U,ndims(U)))';
+U0 =  reshape(U0, [], size(U0,ndims(U0)))';
 Ly = numel(ops.yrange);
 Lx = numel(ops.xrange);
 [nSVD, Npix] = size(U0);
@@ -31,11 +35,10 @@ dy = dy(rs<=0);
 % initialize cell matrices
 mPix    = zeros(numel(dx), 1e4);
 mLam    = zeros(numel(dx), 1e4);
-mLam0   = zeros(numel(dx), 1e4);
 
 iter = 0;
 icell = 0;
-r = [];
+r = rand(1e4,1);
 
 L   = sparse(Ly*Lx, 0);
 LtU = zeros(0, nSVD);
@@ -93,7 +96,7 @@ while 1
     V = min(V, ops.Vcorr);
     
     % find local maxima in a +- d neighborhood
-    maxV = -my_min(-V, 2*d0, [1 2]);
+    maxV = -my_min(-V, d0, [1 2]);
     
     % find indices of these maxima above a threshold
     ix  = (V > maxV-1e-10) & (V > Th);
@@ -103,7 +106,7 @@ while 1
        Nfirst = numel(ind); 
     end
     
-    if numel(ind)==0 || numel(ind)<Nfirst * getOr(ops, 'stopSourcery', 1/20)
+    if numel(ind)==0 
         break;
     end
     
@@ -165,9 +168,7 @@ while 1
         mLam(:,j) = normc(getConnected(mLam(:,j), rs));
         lam = mLam(ipos,j);
         
-        % normalize and multiply by movie SD for display purposes
-        mLam0(ipos,j) = lam .* model.sdmov(ipix);
-
+        
         L(ipix,j) = lam;
         
         LtU(j, :) = U0(:,ipix) * lam;
@@ -197,8 +198,7 @@ while 1
         [~, iclust, lam] = drawClusters(ops, r, mPix, mLam, Ly, Lx);
         
         drawnow
-    end
-    
+    end    
 end
 
 if ops.fig
@@ -209,23 +209,27 @@ if ops.fig
     
     subplot(1,2, 2);
     imagesc(V, [0 Th])
-    axis off    
+    axis off
     
-    drawnow
+     if numel(ind)<Nfirst * getOr(ops, 'stopSourcery', 1/20)
+        break;
+    end
 end
 
-fprintf('%d total ROIs, err %4.4f, thresh %4.4f \n', icell, err(end), Th)
+% this runs only the mask re-estimation step, on non-smoothed PCs
+sourceryAddon;
 
 mLam  =  mLam(:, 1:icell);
-mLam0 = mLam0(:, 1:icell);
 mPix  =  mPix(:, 1:icell);
+
+mLam = bsxfun(@rdivide, mLam, sum(mLam,1));
 %%
 
 % subtract off neuropil only
 Ucell = U0 - reshape(neu' * S', size(U0));
 
 % populate stat with cell locations and footprint
-stat = getFootprint(ops, codes, Ucell, mPix, mLam, mLam0);
+stat = getFootprint(ops, codes, Ucell, mPix, mLam);
 
 % compute compactness of ROIs
 stat = anatomize(ops, mPix, mLam, stat);

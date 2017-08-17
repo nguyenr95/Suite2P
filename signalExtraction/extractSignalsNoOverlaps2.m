@@ -1,4 +1,4 @@
-function [ops, stat, Fcell, FcellNeu]      = extractSignalsNoOverlaps(ops, m, stat)
+function [ops, stat, Fcell, FcellNeu]      = extractSignalsNoOverlaps2(ops, m, stat)
 
 ops.saveNeuropil = getOr(ops, 'saveNeuropil', 0);
 
@@ -17,22 +17,35 @@ S = normc(S);
 
 S = reshape(S, [], size(S, ndims(S)));
 nBasis = size(S,2);
+S = double(S);
 
 % initialize mask
 maskNeu = ones(size(S,1), 1);
 
 stat = getNonOverlapROIs(stat, Ny, Nx);
 
-LtS = zeros(Nk, size(S,2));
-for k = 1:Nk
-    ix = stat(k).ipix(~stat(k).isoverlap);
-    maskNeu(stat(k).ipix)= 0;
-    if numel(ix)==0 || sum(~stat(k).isoverlap)==0
-        LtS(k,:) = 0;
-    else
-        LtS(k,:) = stat(k).lam(~stat(k).isoverlap)' * S(ix, :);
-    end
-end
+% create cell masks and cell exclusion areas
+[stat, cellPix, cellMasks] = createCellMasks(stat, Ny, Nx);
+cellMasks   = sparse(double(cellMasks(:,:)));
+
+LtS = cellMasks * S;
+
+% LtS = zeros(Nk, size(S,2));
+% lam = cell(Nk,1);
+% for k = 1:Nk
+%     ix = stat(k).ipix(~stat(k).isoverlap);
+%     
+%     
+%     lam{k} = stat(k).lam(~stat(k).isoverlap)';
+%     lam{k} = lam{k}/sum(lam{k}(:));
+%     
+%     maskNeu(stat(k).ipix)= 0;
+%     if numel(ix)==0 || sum(~stat(k).isoverlap)==0
+%         LtS(k,:) = 0;
+%     else
+%         LtS(k,:) = lam{k} * S(ix, :);
+%     end
+% end
 
 % add all pixels within X um 
 if isfield(ops, 'exclFracCell') && ops.exclFracCell>0
@@ -45,6 +58,7 @@ end
 S    = bsxfun(@times, S, maskNeu(:));
 StS = S' * S;
 StS = StS + 1e-2 * eye(size(StS));
+iLtS = LtS * (StS\S');
 
 nimgbatch = 2000;
 
@@ -70,34 +84,37 @@ while 1
        break; 
     end
     data = reshape(data, Ly, Lx, []);
-    data = data(ops.yrange, ops.xrange, :);
-    data = single(data);
+    
+    data = data(ops.yrange, ops.xrange, :);    
+    data = double(data);
+    
+%     data = bsxfun(@minus, data, mimg1);    
+    
     NT   = size(data,3);
+    data = reshape(data, [], NT);    
     
     % process the data
-    data = bsxfun(@minus, data, mimg1);
-    data = my_conv2(data, ops.sig, [1 2]);
-    data = bsxfun(@rdivide, data, m.sdmov);    
-    data = single(reshape(data, [], NT));
     
-    %
-    Ftemp = zeros(Nk, NT, 'single');
-    for k = 1:Nk
-       ipix = stat(k).ipix(~stat(k).isoverlap)'; 
-       if ~isempty(ipix)
-           Ftemp(k,:) = stat(k).lam(~stat(k).isoverlap)' * data(ipix,:);
-       end
-    end
+    
+%     Ftemp = zeros(Nk, NT, 'single');
+%     for k = 1:Nk
+%        ipix = stat(k).ipix(~stat(k).isoverlap)'; 
+%        if ~isempty(ipix)
+%            Ftemp(k,:) = lam{k} * data(ipix,:);
+%        end
+%     end
+    Ftemp               = cellMasks * data;
     F(:,ix + (1:NT))    = Ftemp;
     
-    Tneu                = StS\(S' * data);
-    Ftemp2              = LtS * Tneu;    
+%     Tneu                = StS\(S' * data);
+    Ftemp2              = iLtS * data; %LtS * Tneu;    
     Fneu(:,ix + (1:NT)) = Ftemp2;
     
 %     Fneu(:,ix + (1:NT))     = m.LtS * Fdeconv(1+Nk:end, :); % estimated neuropil
 %     F(:,ix + (1:NT))        = Fneu(:,ix + (1:NT)) + Fdeconv(1:Nk, :); % estimated ROI signal
     
     if ops.saveNeuropil
+        Tneu =  StS\(S' * data);
         Ntraces(:,ix + (1:NT)) = Tneu;
     end
     
@@ -107,29 +124,6 @@ while 1
     end
 end
 fclose(fid);
-%% add the means back in to both neuropil and total
-data = my_conv2(mimg1, ops.sig, [1 2]);
-data = bsxfun(@rdivide, data, m.sdmov);
-data = single(reshape(data, [], 1));
-
-scalefactors = nan(numel(stat),1);
-Ftemp = zeros(Nk, 1, 'single');
-for k = 1:Nk
-    ipix = stat(k).ipix(~stat(k).isoverlap)'; 
-    if ~isempty(ipix)
-        Ftemp(k,:) = stat(k).lam(~stat(k).isoverlap)' * data(ipix,1);
-        scalefactors(k) = mean(m.sdmov(ipix));
-    end
-end
-
-Tneu                = StS\(S' * data);
-Ftemp2              = LtS * Tneu;
-
-Fneu     = bsxfun(@plus, Fneu, Ftemp2); % estimated neuropil
-F        = bsxfun(@plus, F,    Ftemp);
-
-Fneu     = bsxfun(@times, Fneu, scalefactors); % estimated neuropil
-F        = bsxfun(@times, F,    scalefactors);
 
 %%
 % get activity stats

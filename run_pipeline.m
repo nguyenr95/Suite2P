@@ -15,6 +15,7 @@ ops0.signalExtraction               = getOr(ops0, 'signalExtraction', 'raw');
 ops0.interpolateAcrossPlanes        = getOr(ops0, 'interpolateAcrossPlanes', 0);
 ops0.maxNeurop                      = getOr(ops0, 'maxNeurop', 1.5);
 
+
 ops                                 = build_ops3(db, ops0);
 if isfield(ops, 'numBlocks') && ~isempty(ops.numBlocks)
     if numel(ops.numBlocks) == 1
@@ -96,35 +97,25 @@ for i = 1:length(ops.planesToProcess)
         telapsed = toc(tstart);
         fprintf('done in %.1f sec',telapsed)
     end
-    
-    SVDroi_file_name = sprintf('%sSVDroi_%s_%s_plane%d.mat', ops.ResultsSavePath, ops.mouse_name, ops.date, ops.iplane);
-    if (ops.getROIs || getOr(ops, {'writeSVDroi'}, 0)) && ~exist(SVDroi_file_name,'file')
-        fprintf('Computing SVDroi ...')
-        tstart = tic;
-        % extract and/or write to disk SVD comps (normalized data)
-        [ops, U, model]    = get_svdForROI(ops);
-        telapsed = toc(tstart);
-        fprintf('done in %.1f sec',telapsed)
-    else
-        load(SVDroi_file_name)
-        model.sdmov = ops.sdmov;
-    end
 
     if ops.getROIs
         
         ops.imageRate = getOr(ops, {'imageRate'}, 30);
         
         % get sources in stat, and clustering images in res
-        [ops, stat, model]           = sourcery(ops,U, model);
-        
+        [ops, stat, model]           = sourcery(ops);
+
         % extract dF
-        switch ops.signalExtraction
+        %         ops.signalExtraction = 'surround';
+        switch getOr(ops, 'signalExtraction', 'surround')
             case 'raw'
                 [ops, stat, Fcell, FcellNeu] = extractSignalsNoOverlaps(ops, model, stat);
             case 'regression'
                 [ops, stat, Fcell, FcellNeu] = extractSignals(ops, model, stat);
+            case 'surround'
+                [ops, stat, Fcell, FcellNeu] = extractSignalsSurroundNeuropil(ops, stat);
         end
-
+        
         % apply user-specific clustrules to infer stat.iscell
         stat                         = classifyROI(stat, ops.clustrules);
         

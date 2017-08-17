@@ -1,5 +1,13 @@
 %% SET ALL DEFAULT OPTIONS HERE
 
+% UPDATE end-of-summer 2017: default neuropil extraction is now "surround"
+% and it's very fast. Cell extraction is on the raw data (no pixel-scaling or smoothing). 
+
+% UPDATE summer 2017: default spike deconvolution changed to a customized version of
+% OASIS (due to our results in this paper http://www.biorxiv.org/content/early/2017/06/27/156786). Please
+% Please download the OASIS code from https://github.com/zhoupc/OASIS_matlab, and
+% add the folder, with its subfolders, to your Matlab path. 
+
 % UPDATE Christmas 2016: number of clusters determined automatically, but
 % do specify the "diameter" of an average cell for best results. You can do this with either
 % db(iexp).diameter, or ops0.diameter
@@ -18,7 +26,7 @@ end
 
 % mex -largeArrayDims SpikeDetection/deconvL0.c (or .cpp) % MAKE SURE YOU COMPILE THIS FIRST FOR DECONVOLUTION
 
-ops0.useGPU                 = 1; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
+ops0.useGPU                 = 0; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
 ops0.fig                    = 1; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 
@@ -36,7 +44,7 @@ ops0.showTargetRegistration = 1; % shows the image targets for all planes to be 
 ops0.PhaseCorrelation       = 1; % set to 0 for non-whitened cross-correlation
 ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exact number from phase correlation
 ops0.NimgFirstRegistration  = 500; % number of images to include in the first registration pass 
-ops0.nimgbegend             = 250; % frames to average at beginning and end of blocks
+ops0.nimgbegend             = 0; % frames to average at beginning and end of blocks
 ops0.dobidi                 = 1; % infer and apply bidirectional phase offset
 
 % cell detection options
@@ -44,14 +52,26 @@ ops0.ShowCellMap            = 1; % during optimization, show a figure of the clu
 ops0.sig                    = 0.5;  % spatial smoothing length in pixels; encourages localized clusters
 ops0.nSVDforROI             = 1000; % how many SVD components for cell clustering
 ops0.NavgFramesSVD          = 5000; % how many (binned) timepoints to do the SVD based on
-ops0.signalExtraction       = 'regression'; % how to extract ROI and neuropil signals: 'raw', 'regression'
+ops0.signalExtraction       = 'surround'; % how to extract ROI and neuropil signals: 
+%  'raw' (no cell overlaps), 'regression' (allows cell overlaps), 
+%  'surround' (no cell overlaps, surround neuropil model)
 
-% spike deconvolution options
+% neuropil options (if 'surround' option)
+% all are in measurements of pixels
+ops0.innerNeuropil  = 1; % padding around cell to exclude from neuropil
+ops0.outerNeuropil  = Inf; % radius of neuropil surround
+% if infinity, then neuropil surround radius is a function of cell size
+if isinf(ops0.outerNeuropil)
+    ops0.minNeuropilPixels = 400; % minimum number of pixels in neuropil surround
+    ops0.ratioNeuropil     = 5; % ratio btw neuropil radius and cell radius
+    % radius of surround neuropil = ops0.ratioNeuropil * (radius of cell)
+end
+
+
+% spike deconvolution and neuropil subtraction options
 ops0.imageRate              = 30;   % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
 ops0.sensorTau              = 2; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
-ops0.maxNeurop              = Inf; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
-ops0.recomputeKernel        = 1; % whether to re-estimate kernel during optimization (default kernel is "reasonable", if you give good timescales)
-ops0.sameKernel             = 1; % whether the same kernel should be estimated for all neurons (robust, only set to 0 if SNR is high and recordings are long)
+ops0.maxNeurop              = 1; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
 
 % red channel options
 % redratio = red pixels inside / red pixels outside
@@ -60,8 +80,8 @@ ops0.sameKernel             = 1; % whether the same kernel should be estimated f
 ops0.redthres               = 1.5; % the higher the thres the less red cells
 ops0.redmax                 = 1; % the higher the max the more NON-red cells
 
-%% RUN THE PIPELINE HERE
 db0 = db;
+%% RUN THE PIPELINE HERE
 
 for iexp = 1:length(db)
     for iplane = 1:db(iexp).nplanes
@@ -69,17 +89,15 @@ for iexp = 1:length(db)
         if ~exist(data_file,'file')
             
             disp(db(iexp).comments);
+            run_pipeline(db0(iexp), ops0);
             
-            % copy files from zserver
-            run_pipeline(db(iexp), ops0);
+            % deconvolved data into st, and neuropil subtraction coef in stat
+            add_deconvolution(ops0, db);
             
-            % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
-            % add_deconvolution(ops1, db(iexp), clustrules);
         end
-    end
+    end    
 end
 %% STRUCTURE OF RESULTS FILE
-
 % cell traces are in dat.Fcell
 % neuropil traces are in dat.FcellNeu
 % manual, GUI overwritten "iscell" labels are in dat.cl.iscell

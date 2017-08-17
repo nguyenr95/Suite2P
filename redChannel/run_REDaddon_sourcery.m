@@ -1,16 +1,16 @@
-function run_REDaddon_sourcery(iexp, db, ops0)
+function run_REDaddon_sourcery(db, ops0)
+ops = build_ops3(db, ops0);
 % red channel addon to already processed data
 mimgG = [];
-ops = build_ops3(db(iexp), ops0);
 
-if sum(ops.expts==ops.expred)>0
-    mimgR = red_channel_mean(ops);
+if sum(ismember(ops.expts, ops.expred))>0
+    mimgR = regRedChannelExpts(ops);
 else
     if ops.nchannels_red==2
-        % return green mean image from recording
-        [mimgR,mimgG] = red_channel_mean3(ops);
+        % return green mean image from short red/green recording
+        [mimgR, mimgG] = regRedGreenChannel(ops);
     else
-        mimgR = red_channel_mean2(ops);
+        mimgR = regRedChannelOnly(ops);
     end
 end
 

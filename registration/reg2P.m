@@ -109,7 +109,7 @@ if ops.doRegistration
     end
     
     % display target image
-    if ops.showTargetRegistration   
+    if ops.fig   
         PlotRegMean(ops1,ops);
         drawnow
     end
@@ -146,6 +146,13 @@ for i = 1:numPlanes
         
         % open bin file for writing
         fid{i,j}              = fopen(ops1{i,j}.RegFile, 'w');
+        
+        
+        ops1{i,j}.RegFile2 = fullfile(ops.RegFileRoot, ...
+            sprintf('%s_%s_%s_plane%d_RED.bin', ops.mouse_name, ops.date, ...
+            ops.CharSubDirs, i + (j-1)*numPlanes));
+%         fidRED{i,j}              = fopen(ops1{i,j}.RegFile2, 'w');
+        
         ops1{i,j}.DS          = [];
         ops1{i,j}.CorrFrame   = [];
         ops1{i,j}.mimg1       = zeros(ops1{i,j}.Ly, ops1{i,j}.Lx);
@@ -172,8 +179,13 @@ tic
 % compute registration offsets and align using offsets
 % if two consecutive files have as many bytes, they have as many frames
 nbytes = 0;
-for k = 1 %:length(fs) % changed on 16/11/25 by SK
-
+for k = 1% :length(fs) % changed on 16/11/25 by SK
+    if ismember(ops.expts(k), getOr(ops, 'expred', []))
+        nchannels_expt = ops.nchannels_red;
+    else
+        nchannels_expt = ops.nchannels;
+    end
+    % initialize frame count
     for i = 1:numel(ops1)
          ops1{i}.Nframes(k)     = 0;
     end
@@ -217,31 +229,54 @@ for k = 1 %:length(fs) % changed on 16/11/25 by SK
                 % if aligning by the red channel, data needs to be reloaded as the
                 % green channel
                 if red_align
-                    if mod(nFr, nchannels) ~= 0
+                    % if aligning by the red channel, data needs to be reloaded as the
+                    % green channel
+                    %                 nFr = nFramesTiff(fs{k}(j).name);
+                    if mod(nFr, nchannels_expt) ~= 0
                         fprintf('  WARNING: number of frames in tiff (%d) is NOT a multiple of number of channels!\n', j);
                     end
-                    ichanset = [ichannel; nFr; nchannels];
-                    data = loadFramesBuff(ops.temp_tiff, ichanset(1), ichanset(2), ichanset(3), ops.temp_tiff);               
+                    ichanset = [ichannel; nFr; nchannels_expt];
+                    data = loadFramesBuff(ops.temp_tiff, ichanset(1), ichanset(2), ichanset(3), ops.temp_tiff);
+                    % shift green channel by same bidiphase offset
+                    if abs(BiDiPhase) > 0
+                        data = ShiftBiDi(BiDiPhase, data, Ly, Lx);
+                    end
+    
                 end
 
                 dreg = RegMovie(data, ops1, dsall, yFOVs, xFOVs);
+                
+%                 ichanset = [rchannel; nFr; nchannels_expt];
+%                 data = loadFramesBuff(ops.temp_tiff, ichanset(1), ichanset(2), ichanset(3));
+%                 data = ShiftBiDi(BiDiPhase, data, Ly, Lx);
+%                 dreg2 = RegMovie(data, ops1, dsall, yFOVs, xFOVs);
             else
                 dreg = data;
             end
+        
+            % write dreg to bin file+
+            if ~alignAcrossPlanes
+                for i = 1:numPlanes
+                    ifr0 = iplane0(ops.planesToProcess(i));
+                    indframes = ifr0:nplanes:size(data,3);
+                    for l = 1:size(xFOVs,2)
+                        dwrite = dreg(yFOVs(:,l),xFOVs(:,l),indframes);
+                        fwrite(fid{i,l}, dwrite, class(data));
 
-            for l = 1:size(xFOVs,2)
-                dwrite = dreg(yFOVs(:,l),xFOVs(:,l),:); % changed by SK 16/12/14
-                fwrite(fid{i,l}, dwrite, class(data));
-                
-                ops1{i,l}.Nframes(k) = ops1{i,l}.Nframes(k) + size(dwrite,3);
-                ops1{i,l}.mimg1 = ops1{i,l}.mimg1 + sum(dwrite,3);
+    %                     dwrite = dreg2(yFOVs(:,l),xFOVs(:,l),indframes);
+    %                     fwrite(fidRED{i,l}, dwrite, class(data));
+
+                        ops1{i,l}.mimg1 = ops1{i,l}.mimg1 + sum(dwrite,3);
+                    end
+                end
             end
+        
             if rem(j,5)==1
-                fprintf('Plane %d, tiff %d done in time %2.2f \n', i, j, toc)            
+                fprintf('Set %d, tiff %d done in time %2.2f \n', k, j, toc)            
             end
         end
     end
-    iplane0 = iplane0 - nFr/nchannels;
+    iplane0 = iplane0 - nFr/nchannels_expt;
 end
 
 if alignAcrossPlanes && ops.doRegistration % align each frame with the best matching target image
@@ -252,12 +287,16 @@ for i = 1:numel(ops1)
     ops1{i}.mimg1 = ops1{i}.mimg1/sum(ops1{i}.Nframes);
     
     ops1{i}.badframes = false(1, size(ops1{i}.DS,1));
+    if isfield(ops, 'badframes0') && ~isempty(ops.badframes0)
+        ops1{i}.badframes(ops.badframes0) = true;
+    end
 end
 %%
 
 % write registered tiffs to disk if ~isempty(ops.RegFileTiffLocation)
 for i = 1:numel(ops1)    
     fclose(fid{i});
+    
     fid{i}           = fopen(ops1{i}.RegFile, 'r');
     
     if ~isempty(ops.RegFileTiffLocation)

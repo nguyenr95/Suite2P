@@ -15,9 +15,14 @@ plot(F_smooth)
 axis tight
 hold on
 
-coefNeu = 0.7;
+coefNeu = 1;
 if isfield(h.dat.stat, 'neuropilCoefficient')
     coefNeu = h.dat.stat(ichosen).neuropilCoefficient;
+end
+
+baseline = 0;
+if isfield(h.dat.stat, 'baseline')
+    baseline = h.dat.stat(ichosen).baseline;
 end
 
 if isfield(h.dat, 'FcellNeu')
@@ -27,6 +32,7 @@ if isfield(h.dat, 'FcellNeu')
 end
 
 box off
+axis off
 set(gca, 'xcolor', 'w')
 % plot([0 NT], [0 0], 'k', 'Linewidth', 2)
 % axis off
