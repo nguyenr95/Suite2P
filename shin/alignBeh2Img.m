@@ -12,11 +12,11 @@ if ~exist('ops_file','var')
             error('Two or more regops files exist. Choose the appropriate file.')
         end
         load(fullfile(folder_name,ops_file.name));
+        ops = ops1{1};
     catch
-        [ops_file,folder_name] = uigetfile([folder_name,'regops*.mat'],'MultiSelect','off');
-        load(fullfile(folder_name,ops_file));
+        warning('Could not find the appropriate ops_file.')
     end
-    ops = ops1{1};
+    
 else
     [folder_name,ops_file] = fileparts(ops_file);
     load(fullfile(folder_name,ops_file));
@@ -130,6 +130,7 @@ switch MatlabPulseMode
             sig_fall_temp = 0;
 
             while 1
+
                 sig_rise_temp = rise(find(rise>sig_fall_temp,1,'first'));
 
                 if k==1
@@ -148,7 +149,7 @@ switch MatlabPulseMode
                     sig_rise_temp2 = sig_fall_temp + 10;
                 end
 
-                if k>1
+                if k>1 % skip k=59950 (VS045 170911) k=105652 (VS045 170913)
                     if sig_fall_temp - sig_rise_temp < 2
                              % transient artifact (spike) at the baseline
                         if  abs(sig(sig_fall_temp+2) - sig(sig_rise_temp-2)) < 0.01
