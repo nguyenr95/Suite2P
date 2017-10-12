@@ -52,7 +52,14 @@ try
     if isfield(h, 'dat') && isfield(h.dat, 'filename')
         root = fileparts(h.dat.filename);
     else
-        root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
+        computerName = getComputerName;
+        computerName = 'harveylab41223';
+        switch computerName
+            case 'shin-pc'
+                root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
+            case 'harveylab41223'
+                root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Ted\Suite2P_Ted\';
+        end
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
     set(h.figure1, 'Name', filename1);
