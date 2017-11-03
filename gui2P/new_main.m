@@ -58,7 +58,7 @@ try
             case 'shin-pc'
                 root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
             case 'harveylab41223'
-                root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Ted\Suite2P_Ted\';
+                root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Tier1\Ted\Suite2P_Ted\';
         end
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
