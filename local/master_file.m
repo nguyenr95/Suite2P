@@ -5,7 +5,7 @@
 % db(iexp).diameter, or ops0.diameter
 
 % overwrite any of these default options in your make_db file for individual experiments
-make_dbM1M2; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
+make_db4MissingFiles; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
 % make_db4Alice;
 % make_db_V1RSP;
 
@@ -70,9 +70,15 @@ for iexp = 1:length(db)
             
             disp(db(iexp).comments);
             
-            % copy files from zserver
-            run_pipeline(db(iexp), ops0);
-            
+            try
+                % copy files from zserver
+                run_pipeline(db(iexp), ops0);
+            catch ME
+                ME.message
+                ME.stack.file
+                ME.stack.name
+                ME.stack.line
+            end
             % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
             % add_deconvolution(ops1, db(iexp), clustrules);
         end

@@ -103,7 +103,8 @@ while 1
        Nfirst = numel(ind); 
     end
     
-    if numel(ind)==0 || numel(ind)<Nfirst * getOr(ops, 'stopSourcery', 1/20)
+    % terminatino criteria changed by SK 17/09/06
+    if numel(ind)==0 || numel(ind)<Nfirst * getOr(ops, 'stopSourcery', 1/20) || iter>100
         break;
     end
     
