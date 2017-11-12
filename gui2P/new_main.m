@@ -53,7 +53,6 @@ try
         root = fileparts(h.dat.filename);
     else
         computerName = getComputerName;
-        computerName = 'harveylab41223';
         switch computerName
             case 'shin-pc'
                 root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';

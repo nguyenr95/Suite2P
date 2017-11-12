@@ -8,7 +8,23 @@ set(h.text50,'String', [filename1 '.mat']);
 % statLabels = h.statLabels;
 
 % this load st, prior and statLabels
-load(h.dat.cl.fpath);
+
+computerName = getComputerName;
+
+try
+    load(h.dat.cl.fpath);
+catch
+    [pathstr,name,ext] = fileparts(h.dat.cl.fpath);
+    switch computerName
+        case 'shin-pc'
+            pathstr = 'C:\Users\Shin\Documents\GitHub\Suite2P\configFiles\';
+            h.dat.cl.fpath = [pathstr,name,ext];
+        case 'harveylab41223'
+            pathstr = 'C:\Users\harveylab\Documents\GitHub\Suite2P\configFiles\';
+            h.dat.cl.fpath = [pathstr,name,ext];
+    end
+    load(h.dat.cl.fpath);
+end
 stat = h.dat.stat;
 
 ilbl = false(1, numel(statLabels));
