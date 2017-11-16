@@ -25,11 +25,11 @@ ops0.useGPU                 = 1; % if you can use an Nvidia GPU in matlab this a
 ops0.fig                    = 1; % turn off figure generation with 0
 
 % root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
-ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging'; % location of saved image data (folder structure, check out README file)
-ops0.temp_tiff              = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\temp\temp.tiff'; % copies each remote tiff locally first, into this file
+ops0.RootStorage            = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier2\Shin\ShinDataAll\Imaging'; % location of saved image data (folder structure, check out README file)
+ops0.temp_tiff              = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P\temp\temp.tiff'; % copies each remote tiff locally first, into this file
 ops0.RegFileRoot            = 'E:\Imaging\Suite2P';  % location for binary file
 ops0.DeleteBin              = 0; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P'; % a folder structure is created inside
+ops0.ResultsSavePath        = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P'; % a folder structure is created inside
 ops0.RegFileTiffLocation    = []; %'D:/DATA/'; % leave empty to NOT save registered tiffs (slow)
 
 % registration options

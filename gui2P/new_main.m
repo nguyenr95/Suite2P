@@ -55,7 +55,7 @@ try
         computerName = getComputerName;
         switch computerName
             case 'shin-pc'
-                root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
+                root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P\';
             case 'harveylab41223'
                 root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Tier1\Ted\Suite2P_Ted\';
         end

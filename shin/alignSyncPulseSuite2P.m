@@ -9,7 +9,7 @@ mouseID = sprintf('%s%03d',initials,mouseNum);
 % sliceSet = [1,2,3,7,8,9];
 
 if ~exist('data_file','var')
-    folder_name = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Shin\\ShinDataAll\\Suite2P\\%s\\%d\\',mouseID,date_num);
+    folder_name = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Tier1\\Shin\\ShinDataAll\\Suite2P\\%s\\%d\\',mouseID,date_num);
     try
         ops_file = sprintf('regops_%s_%d',mouseID,date_num);
         temp = load(fullfile(folder_name,ops_file));
@@ -51,7 +51,7 @@ chunk_size = 1e6;
 temp = userpath;
 matlab_dir = temp(1:end-1);
 mat_file_name = sprintf('%s%s\\%s_%s',...
-    '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Current Mice\',...
+    '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Current Mice\',...
     ops.mouse_name,ops.mouse_name,ops.date);
 mat_file_name = [mat_file_name,'.mat'];
 load(mat_file_name);
@@ -68,7 +68,7 @@ nFramesTotal = ops.Nframes * ops.nplanes; % default num of frames
 
 switch MatlabPulseMode
     case 'analog'
-        ImgPath = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Shin\\ShinDataAll\\Imaging\\%s\\%d\\',mouseID,date_num);
+        ImgPath = sprintf('\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\Tier2\\Shin\\ShinDataAll\\Imaging\\%s\\%d\\',mouseID,date_num);
         obj_file = sprintf('%s_%d_FOV1_00001.mat',mouseID,date_num);
         load(fullfile(ImgPath,obj_file));
         eval(['obj = ',obj_file(1:end-4),';']);
@@ -194,7 +194,7 @@ switch MatlabPulseMode
         
     case 'digital'
         % detecting MATLAB sync pulses
-        file_name = sprintf('%s%s\\%s\\%s_0001.h5','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,'FOV1');
+        file_name = sprintf('%s%s\\%s\\%s_0001.h5','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier2\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,'FOV1');
         if exist(file_name,'file')
             a = ws.loadDataFile(file_name);
             samp_rate = 2e3;
@@ -208,10 +208,10 @@ switch MatlabPulseMode
             SIsig = a.sweep_0001.analogScans(:,pick_SI);
         end
 
-        % file_name = dir(sprintf('%s%s%03d\\%s\\%s_syncData*.mat','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',obj.initials,obj.mouseNum,obj.recDate,obj.acqName(1:4)));
-        file_name = dir(sprintf('%s%s\\%s\\%s_syncData*.mat','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,'FOV1'));
+        % file_name = dir(sprintf('%s%s%03d\\%s\\%s_syncData*.mat','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier2\Shin\ShinDataAll\Imaging\',obj.initials,obj.mouseNum,obj.recDate,obj.acqName(1:4)));
+        file_name = dir(sprintf('%s%s\\%s\\%s_syncData*.mat','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier2\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,'FOV1'));
         if ~isempty(file_name)
-            file_name = sprintf('%s%s\\%s\\%s','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,file_name.name);
+            file_name = sprintf('%s%s\\%s\\%s','\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier2\Shin\ShinDataAll\Imaging\',ops.mouse_name,ops.date,file_name.name);
             if exist(file_name,'file')
                 temp = load(file_name);
                 if isfield(temp,'sync')

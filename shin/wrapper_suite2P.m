@@ -11,7 +11,7 @@ function wrapper_suite2P
             date_num = num2str(date_set{mi}(di));
             fprintf('Processing %s %s',mouseID,date_num)
             
-            folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Shin\ShinDataAll\Suite2P\';
+            folder_name = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P\';
             ops_file = sprintf('regops_%s_%s.mat',mouseID,date_num);
             full_ops_file = fullfile(folder_name,mouseID,date_num,ops_file);
             save_file = sprintf('B_%s_%s.mat',mouseID,date_num);
