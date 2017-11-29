@@ -39,17 +39,21 @@ end
 st0(isnan(st0)) = 2;
 ilbl(1) = false;
 
-% model       = buildaLDA(prior, st, statLabels);
-% [Ypred, ps] = evaluateLDA(model, st0);
-model       = buildHist(prior, st, statLabels);
-[Ypred, ps] = evaluateHist(model, st0);
+out = classDialogBox;
 
-for j = 1:length(stat)
-    stat(j).iscell = Ypred(j) > h.dat.cl.threshold; 
-    stat(j).cellProb  = Ypred(j);
-    % overwrite manual selections -- SK 17/02/08
-    stat(j).iscell(stat(j).manual>1e-3) = 1;
-    stat(j).iscell(stat(j).manual<-1e-3) = 0;
+if out
+    % model       = buildaLDA(prior, st, statLabels);
+    % [Ypred, ps] = evaluateLDA(model, st0);
+    model       = buildHist(prior, st, statLabels);
+    [Ypred, ps] = evaluateHist(model, st0);
+
+    for j = 1:length(stat)
+        stat(j).iscell = Ypred(j) > h.dat.cl.threshold; 
+        stat(j).cellProb  = Ypred(j);
+        % overwrite manual selections -- SK 17/02/08
+        stat(j).iscell(stat(j).manual>1e-3) = 1;
+        stat(j).iscell(stat(j).manual<-1e-3) = 0;
+    end
 end
 
 h.dat.stat      = stat;
@@ -61,3 +65,19 @@ h.statLabels    = statLabels;
 % set(h.text51,'String', fname);
 
 % ps
+
+function out = classDialogBox
+
+    % Construct a questdlg with three options
+    choice = questdlg('(Re-) apply a classifier?', ...
+        'Dessert Menu', ...
+        'No','Yes','No');
+    % Handle response
+    switch choice
+        case 'Yes'
+            out = true;
+        case 'No'
+            out = false;
+    end
+
+end
