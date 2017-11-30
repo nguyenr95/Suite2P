@@ -79,6 +79,15 @@ if isfield(h.dat, 'dat')
     h.dat = h.dat.dat;
     h.dat.proc_flag = 1;
     h = classROI(h);
+    
+    % set all quadrants as not visited
+    h.quadvalue = zeros(3);
+    for j = 1:3
+        for i = 1:3
+            set(h.(sprintf('Q%d%d', j,i)), 'BackgroundColor',[.92 .92 .92]);
+        end
+    end
+    
 else
     h.dat.proc_flag = 0;
     
