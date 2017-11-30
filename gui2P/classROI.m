@@ -60,11 +60,10 @@ h.dat.stat      = stat;
 h.st0           = st0;
 h.statLabels    = statLabels;
 
-% h.dat.cl.rands = 0.1 + .8 * Ypred;    
-
+% h.dat.cl.rands = 0.1 + .8 * Ypred;
 % set(h.text51,'String', fname);
-
 % ps
+end
 
 function out = classDialogBox
 
