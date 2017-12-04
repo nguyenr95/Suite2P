@@ -78,7 +78,11 @@ if isfield(h.dat, 'dat')
     % proc file loaded
     h.dat = h.dat.dat;
     h.dat.proc_flag = 1;
-    h = classROI(h);
+    
+    % set up classifier
+    h.dat.cl.threshold  = 0.5;
+    h                   = identify_classifier(h);    
+    h                   = classROI(h);
     
     % set all quadrants as not visited
     h.quadvalue = zeros(3);
@@ -257,11 +261,13 @@ catch
     end
 end
 % for non-proc files, save additional samples for the classifier
-h.st0(:,1) = double([h.dat.stat.iscell]);
-statLabels  = h.statLabels;
-prior       = h.prior;
-st          = cat(1, h.st, h.st0);
-save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+if ~h.dat.proc_flag
+    h.st0(:,1) = double([h.dat.stat.iscell]);
+    statLabels  = h.statLabels;
+    prior       = h.prior;
+    st          = cat(1, h.st, h.st0);
+    save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+end
 
 
 
