@@ -244,15 +244,25 @@ function pushbutton84_Callback(hObject, eventdata, h)
 % save proc file and rules file
 h.dat.F.trace = [];
 dat = h.dat;
-save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
-if ~h.dat.proc_flag
-    % for non-proc files, save additional samples for the classifier
-    h.st0(:,1) = double([h.dat.stat.iscell]);
-    statLabels  = h.statLabels;
-    prior       = h.prior;
-    st          = cat(1, h.st, h.st0);
-    save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+try
+    save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
+catch
+    temp = h.dat.filename;
+    if strfind(temp,'Tier1')
+        error('Unknown error...')
+    else
+        fprintf('Updating the path to Tier1\n')
+        temp = strrep(temp,'HarveyLab','HarveyLab\Tier1');
+        save([temp(1:end-4) '_proc.mat'], 'dat')
+    end
 end
+% for non-proc files, save additional samples for the classifier
+h.st0(:,1) = double([h.dat.stat.iscell]);
+statLabels  = h.statLabels;
+prior       = h.prior;
+st          = cat(1, h.st, h.st0);
+save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+
 
 
 function figure1_ResizeFcn(hObject, eventdata, h)
