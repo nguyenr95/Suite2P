@@ -62,7 +62,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                 Fcell = Fcell{1};
                 FcellNeu = FcellNeu{1};
             end
-            num_roi = 10;%length(length(dat.stat));
+            num_roi = length(length(dat.stat));
             
             fit_mode = 'prctile'; %'exp_linear';
             base_prctile = 50;
