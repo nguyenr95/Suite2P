@@ -17,8 +17,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
     mouseID = sprintf('%s%03d',initials,mouseNum);
     
     if ~exist('data_file','var')
-        folder_name = sprintf(['\\\\research.files.med.harvard.edu\\Neurobio\\HarveyLab\\',...
-            'Shin\\ShinDataAll\\Suite2P\\%s\\%d'],mouseID,date_num);
+        folder_name = fullfile('\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P',mouseID,num2str(date_num));
         try
             ops_file = sprintf('regops_%s_%d',mouseID,date_num);
             temp = load(fullfile(folder_name,ops_file));
@@ -31,8 +30,9 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
         data_file = dir(fullfile(folder_name,'*_proc.mat'));
     end
     
-    movFile = fullfile(ops0.RootDirRaw,'FOV1_001_001.tif'); % SI4?
-    if ~exist(movFile,'file')
+    try
+        movFile = fullfile(ops0.RootDirRaw,'FOV1_001_001.tif'); % SI4?
+    catch
         movFile = fullfile(ops0.RootDirRaw,'FOV1_00001_00001.tif'); % SI2016
     end
     
@@ -136,4 +136,20 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
         end
     end
     save(fullfile(folder_name,file_name_to),'dFsp','-append')
+    
+    %% save Lite file
+    ROI_num = find([dat.stat.iscell]);
+    Nframes = dat.ops.Nframes;
+    temp = nan(length(ROI_num),Nframes);
+    
+    for ci = 1:length(ROI_num)
+        temp(ci,:) = dFsp.slice.cell(ROI_num(ci)).sp;
+    end
+    
+    clear dFsp
+    dFsp = temp; % dFsp just contains spike data
+    [~,name,ext] = fileparts(file_name_to);
+    file_name_to_lite = [name,'_Lite',ext];
+    save(fullfile(folder_name,file_name_to_lite),'dFsp','ROI_num');
+    
 end
