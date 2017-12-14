@@ -1,8 +1,8 @@
 function saveLiteFile(mouse_num,date_num)
     
     mouseID = getMouseID(mouse_num);
-    dir_from = fullfile('\\research.files.med.harvard.edu\Neurobio\HarveyLab\shin\ShinDataAll\Suite2P',mouseID,num2str(date_num));
-    dir_to   = fullfile('\\research.files.med.harvard.edu\Neurobio\HarveyLab\shin\ShinDataAll\Suite2P',mouseID,num2str(date_num));
+    dir_from = fullfile('\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\shin\ShinDataAll\Suite2P',mouseID,num2str(date_num));
+    dir_to   = fullfile('\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\shin\ShinDataAll\Suite2P',mouseID,num2str(date_num));
     
     if ~exist(dir_to,'dir')
         mkdir(dir_to);
