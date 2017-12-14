@@ -73,6 +73,7 @@ switch MatlabPulseMode
         samp_rate = 1e3;
         file_name = [obj.defaultDir,'FOV1_0001.h5'];
         file_name = changePath4Server(file_name);
+        file_name = strrep(file_name,'HarveyLab\Shin','HarveyLab\Tier2\Shin');
         try
             wsData = h5read(file_name,'/sweep_0001/analogScans');
         catch
@@ -148,8 +149,8 @@ switch MatlabPulseMode
                 if isempty(sig_rise_temp2)
                     sig_rise_temp2 = sig_fall_temp + 10;
                 end
-
-                if k>1 % skip k=59950 (VS045 170911) k=105652 (VS045 170913)
+                
+                if k>1 % skip k=59950 (VS045 170911) k=105652 (VS045 170913) k=28779 (VS045 170922) k=9852 (VS035 170508)
                     if sig_fall_temp - sig_rise_temp < 2
                              % transient artifact (spike) at the baseline
                         if  abs(sig(sig_fall_temp+2) - sig(sig_rise_temp-2)) < 0.01
@@ -265,7 +266,7 @@ end
 if length(SI_sig_rise) > nFramesTotal * (nSlices + fastZDiscardFlybackFrames)
     warning('The number of ScanImage sync pulses exceeds the saved number of image frames');
     init_ind  = find(diff(SI_sig_rise)>40e-3*samp_rate)+1;
-    init_ind = [1,init_ind',length(SI_sig_rise)+1];
+    init_ind = [1,init_ind,length(SI_sig_rise)+1];
     k = 1;
     minBlockSize = 1e4;
     for i = 1:length(init_ind)-1
