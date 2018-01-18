@@ -96,7 +96,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                 end
             end
             
-            for ri = 1:num_roi
+            parfor ri = 1:num_roi
                 if isgood(ri)
                     %%
                     fprintf('Analyzing ROI %d (%d / %d cells)\n',ri,sum(isgood(1:ri)),sum(isgood));
@@ -141,27 +141,9 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                     G{ri} = g;
                     LAM{ri} = lam;
                     NC{ri} = dat.stat(ri).neuropilCoefficient;
-                    
-                    % dFsp.slice(si).roi(ri).dF = dF;
-                    % dFsp.slice(si).roi(ri).c  = c';
-                    % dFsp.slice(si).roi(ri).sp = sp;
-                    % dFsp.slice(si).roi(ri).b  = b;
-                    % dFsp.slice(si).roi(ri).g  = g;
-                    % dFsp.slice(si).roi(ri).lam = lam;
-                    % dFsp.slice(si).roi(ri).neuropilCoefficient = dat.stat(ri).neuropilCoefficient;
-                    % telapsed = toc(tstart);
-                    % fprintf('Done in %.1f sec.\n',telapsed);
-                    
-                    %S = whos;
-                    %mem = sum([S.bytes])*1e-6;
-                    %fprintf('%.1f MB used\n\n',mem);
-                else
-                    % dFsp.slice(si).roi(ri).sp = [];
-                    % SP{ri} = [];
+                
                 end
-                % dFsp.slice(si).roi(ri).roi = ri;
-                % telapsed = toc(tstart);
-                % fprintf('%d sec elapsed\n',si,round(telapsed))
+                
             end
         end
     end
@@ -183,7 +165,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
     end
     
     fprintf('Saving %s ... ',file_name_to);
-    save(fullfile(folder_name,file_name_to),'dFsp','-append')
+    save(fullfile(folder_name,file_name_to),'dFsp','msg','-append')
     fprintf('Done\n\n');
     
     %% save Lite file
