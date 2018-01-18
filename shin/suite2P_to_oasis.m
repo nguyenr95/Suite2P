@@ -27,7 +27,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
         end
         ops0 = temp.ops1{1};
         % data_file = sprintf('F_%s_%d_plane1_proc.mat',mouseID,date_num);
-        data_file = dir(fullfile(folder_name,'*_proc.mat'));
+        data_file = dir(fullfile(folder_name,'F_*_proc.mat'));
     end
     
     try
@@ -90,10 +90,12 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
             % check if neuropil subtraction was successful
             if any(isnan([dat.stat.neuropilCoefficient]))
                 if all(isnan([dat.stat.neuropilCoefficient]))
-                    msg = addMsg(msg,sprintf('neuropil subtraction failed in all cells.'));
+                    warn_msg = sprintf('neuropil subtraction failed in all cells.');
                 else
-                    msg = addMsg(msg,sprintf('neuropil subtraction failed in some cells.'));
+                    warn_msg = sprintf('neuropil subtraction failed in some cells.');
                 end
+                msg = addMsg(msg,warn_msg);
+                fprintf('%s\n',warn_msg);
             end
             
             parfor ri = 1:num_roi
