@@ -42,6 +42,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
     
     tstart = tic;
     dat = [];
+    msg = [];
     for si = 1:nSlices
         if ismember(si,sliceSet)
             if nSlices==1
@@ -85,7 +86,17 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
             fprintf('Deconvolving F\n\n')
             tstart = tic;
             ROI_num = find([dat.stat(1:num_roi).iscell]);
-            parfor ri = 1:num_roi
+            
+            % check if neuropil subtraction was successful
+            if any(isnan([dat.stat.neuropilCoefficient]))
+                if all(isnan([dat.stat.neuropilCoefficient]))
+                    msg = addMsg(msg,sprintf('neuropil subtraction failed in all cells.'));
+                else
+                    msg = addMsg(msg,sprintf('neuropil subtraction failed in some cells.'));
+                end
+            end
+            
+            for ri = 1:num_roi
                 if isgood(ri)
                     %%
                     fprintf('Analyzing ROI %d (%d / %d cells)\n',ri,sum(isgood(1:ri)),sum(isgood));
@@ -96,7 +107,13 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
                     else
                         % compute dF/F
                         rawTrace = Fcell(ri,:);
-                        subTrace = Fcell(ri,:) - bsxfun(@times, FcellNeu(ri,:), dat.stat(ri).neuropilCoefficient); % using the method in extractSignals.m
+                        if ~isnan(dat.stat(ri).neuropilCoefficient)
+                            subTrace = Fcell(ri,:) - bsxfun(@times, FcellNeu(ri,:), dat.stat(ri).neuropilCoefficient); % using the method in extractSignals.m
+                        else
+                            % if neuropilCoefficient was not properly
+                            % computed, use rawTrace;
+                            subTrace = rawTrace;
+                        end
                         rawTraceBase = getF_(rawTrace,fit_mode,ops0.imageRate,base_prctile);
                         subTraceBase = getF_(subTrace,fit_mode,ops0.imageRate,base_prctile);
                         dF = (subTrace - subTraceBase)./rawTraceBase;
@@ -182,7 +199,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
     [~,name,ext] = fileparts(file_name_to);
     file_name_to_lite = [name,'_Lite',ext];
     fprintf('Saving %s ... ',file_name_to_lite);
-    save(fullfile(folder_name,file_name_to_lite),'dFsp','ROI_num');
+    save(fullfile(folder_name,file_name_to_lite),'dFsp','ROI_num','msg');
     fprintf('Done\n\n');
     
 end
