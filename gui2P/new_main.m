@@ -458,8 +458,10 @@ if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
            str = cat(2, str, strnew);
        end
     end
+    strnew = sprintf('ROI# = %d\n',ichosen);
+    str = cat(2, str, strnew);
     
-   set(h.text54,'String', str);
+    set(h.text54,'String', str);
 end
 
 function pushbutton86_Callback(hObject, eventdata, h)
