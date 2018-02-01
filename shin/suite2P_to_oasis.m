@@ -27,7 +27,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
         end
         ops0 = temp.ops1{1};
         % data_file = sprintf('F_%s_%d_plane1_proc.mat',mouseID,date_num);
-        data_file = dir(fullfile(folder_name,'*_proc.mat'));
+        data_file = dir(fullfile(folder_name,'F_*_proc.mat'));
     end
     
     try
