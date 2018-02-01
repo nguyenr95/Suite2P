@@ -75,6 +75,7 @@ function suite2P_to_oasis(mouseNum,date_num,varargin)
             %% copying F file with a new name
             file_name_from = sprintf('F_%s_%d_plane1_proc.mat',mouseID,date_num);
             file_name_to   = sprintf('F_%s_%d_plane1_proc_%dprctile.mat',mouseID,date_num,base_prctile);
+            file_name_to   = sprintf('F_%s_%d_plane1_proc_%dprctile_tau2s.mat',mouseID,date_num,base_prctile);
             [success,~,~] = copyfile(fullfile(folder_name,file_name_from),fullfile(folder_name,file_name_to));
 
             if success
