@@ -70,23 +70,33 @@ db0 = db;
 
 for iexp = 1:length(db)
     for iplane = 1:db(iexp).nplanes
-        data_file = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date,sprintf('F_%s_%s_plane%d.mat', db(iexp).mouse_name, db(iexp).date, iplane));
-        if ~exist(data_file,'file')
-            
-            disp(db(iexp).comments);
-            
-            try
-                % copy files from zserver
-                run_pipeline(db(iexp), ops0);
-            catch ME
-                ME.message
-                ME.stack.file
-                ME.stack.name
-                ME.stack.line
+        data_file = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date, ...
+            sprintf('F_%s_%s_plane%d.mat', db(iexp).mouse_name, db(iexp).date, iplane));
+        if exist(data_file,'file')
+            data_file_copy = fullfile(ops0.ResultsSavePath,db(iexp).mouse_name,db(iexp).date, ...
+                sprintf('F_%s_%s_plane%d_backup_%s.mat', db(iexp).mouse_name, db(iexp).date, iplane, datestr(now,'yymmdd')));
+            out = copyfile(data_file,data_file_copy);
+            if out
+                fprintf('F file copied successfully for backup\n')
+            else
+                warning('F file could not be copied. Skipping.')
+                continue
             end
-            % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
-            % add_deconvolution(ops1, db(iexp), clustrules);
         end
+            
+        disp(db(iexp).comments);
+
+        try
+            % copy files from zserver
+            run_pipeline(db(iexp), ops0);
+        catch ME
+            ME.message
+            ME.stack.file
+            ME.stack.name
+            ME.stack.line
+        end
+        % deconvolved data into (dat.)cl.dcell, and neuropil subtraction coef
+        % add_deconvolution(ops1, db(iexp), clustrules);
     end
 end
 %% STRUCTURE OF RESULTS FILE
