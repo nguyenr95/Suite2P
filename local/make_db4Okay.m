@@ -5,7 +5,7 @@ load(fullfile(github_dir,'info_set_good_okay.mat'));
 Suite2P_dir = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P';
 Imaging_dir = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier2\Shin\ShinDataAll\Imaging';
 
-load(fullfile(Imaging_dir,'MotionCorrectInfo.mat'));
+load(fullfile(github_dir,'MotionCorrectInfo.mat'));
 
 mouse_set = [9,15,20,31,35,45];
 for mi = 1:length(mouse_set)
