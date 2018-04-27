@@ -44,6 +44,7 @@ if exist(opath, 'file')
     for j = 1:numel(ops1)       
        if ~exist(ops1{j}.RegFile, 'file') % check if the registered binary file exists
           processed = 0; 
+          clear ops1
        end
     end
 else
