@@ -57,7 +57,7 @@ try
             case 'shin-pc'
                 root = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P\';
             case 'harveylab41223'
-                root = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Ted\Suite2P_Ted\';
+                root = '\\research.files.med.harvard.edu\neurobio\HarveyLab\Tier1\Joe\Suite2P_Joe\';
         end
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
@@ -249,7 +249,13 @@ function pushbutton84_Callback(hObject, eventdata, h)
 h.dat.F.trace = [];
 dat = h.dat;
 try
-    save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
+    shin_path = 'Shin\ShinDataAll\Suite2P';
+    joe_path  = 'Joe\Suite2P_Joe';
+    temp = h.dat.filename(1:end-4);
+    if ~isempty(strfind(temp,shin_path))
+        temp = strrep(temp,shin_path,joe_path);
+    end
+    save([temp,'_proc.mat'], 'dat')
 catch
     temp = h.dat.filename;
     if strfind(temp,'Tier1')
