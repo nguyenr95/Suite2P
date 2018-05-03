@@ -40,7 +40,8 @@ for mi = 1:length(mouse_set)
         end
         
         % but do not skip if old motion correction was used to create F file
-        if ~strcmp(MotionCorrectInfo{di,3},'lucasKanade_plus_nonrigid')
+        pick = cell2mat(MotionCorrectInfo(:,1))==mouse_num & cell2mat(MotionCorrectInfo(:,2))==date_num;
+        if ~strcmp(MotionCorrectInfo{pick,3},'lucasKanade_plus_nonrigid')
             skip_flag = false;
         end
         
