@@ -35,7 +35,9 @@ for mi = 1:length(mouse_set)
         skip_flag = false;
         
         % skip if F file already exists
-        if exist(fullfile(Suite2P_dir,mouseID,num2str(date_set{mi}(di)),F_file_name),'file')
+        F_file_path = fullfile(Suite2P_dir,mouseID,num2str(date_set{mi}(di)),F_file_name);
+        file_info = dir(F_file_path);
+        if exist(F_file_path,'file')
             skip_flag = true;
         end
         
@@ -46,17 +48,27 @@ for mi = 1:length(mouse_set)
         end
         
         % skip if img files have not been motion corrected
-        if isempty(MotionCorrectInfo{di,3})
+        if 0 %isempty(MotionCorrectInfo{di,3})
+            skip_flag = true;
+        end
+        
+        % skip if F file was create on 18/04/26 or later
+        % if datenum(file_info.date) > datenum('2018/04/26')
+        %     skip_flag = true;
+        % end
+        
+        if FOV_info{2}==160607 || strcmp(mouseID,'DA020') || strcmp(mouseID,'VS035')
             skip_flag = true;
         end
 
         if skip_flag
             % fprintf('skipping %s %d\n',mouseID,date_num);
             continue
-        end
-        
+        end        
         
         i = i+1;
+        
+        
         
         db(i).mouse_name    = mouseID;
         db(i).date          = num2str(FOV_info{2});
