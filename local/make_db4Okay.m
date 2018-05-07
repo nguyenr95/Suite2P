@@ -57,7 +57,7 @@ for mi = 1:length(mouse_set)
         %     skip_flag = true;
         % end
         
-        if FOV_info{2}==160607 || strcmp(mouseID,'DA020') || strcmp(mouseID,'VS035')
+        if FOV_info{2}==160607
             skip_flag = true;
         end
 
@@ -67,9 +67,7 @@ for mi = 1:length(mouse_set)
         end        
         
         i = i+1;
-        
-        
-        
+                
         db(i).mouse_name    = mouseID;
         db(i).date          = num2str(FOV_info{2});
         db(i).area          = FOV_info{3};
@@ -82,5 +80,6 @@ for mi = 1:length(mouse_set)
         db(i).comments      = sprintf('%s %s %s %sum',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
         
         fprintf('%s %s %s %sum\n',db(i).mouse_name,db(i).date,db(i).area,db(i).depth);
-    end
+    end    
 end
+db = db(end-2);
