@@ -22,7 +22,7 @@ end
 
 if isfield(h.dat, 'FcellNeu')
     Fneu_smooth = coefNeu * my_conv_local(medfilt1(double(Fneu), 3), 3);
-    plot(Fneu_smooth)
+    plot(Fneu_smooth,'-g')
     plot(F_smooth - Fneu_smooth,'-r')
 end
 
