@@ -56,8 +56,9 @@ try
         switch computerName
             case 'shin-pc'
                 root = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P\';
+                % root = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Joe\Suite2P_Joe\';
             case 'harveylab41223'
-                root = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Ted\Suite2P_Ted\';
+                root = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Joe\Suite2P_Joe\';
         end
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');

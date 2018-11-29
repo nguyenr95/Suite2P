@@ -9,7 +9,7 @@ clear
 root_dir = '\\research.files.med.harvard.edu\Neurobio\HarveyLab\Tier1\Shin\ShinDataAll\Suite2P';
 current_dir = pwd;
 cd(root_dir)
-make_db4Okay; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
+make_db4MissingFiles; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
 cd(current_dir);
 % make_db4Alice;
 % make_db_V1RSP;
